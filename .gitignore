@@ -1,0 +1,6 @@
+*.so
+*.d
+*.pcm
+*.xml
+stderr
+stdout
