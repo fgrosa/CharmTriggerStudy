@@ -24,7 +24,7 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
     TString type = mgr->GetInputEventHandler()->GetDataType(); // can be "ESD" or "AOD"
     if (type.Contains("ESD"))
     {
-        ::Error("AliAnalysisTaskSECharmHadronvn", "This task requires to run on AOD");
+        ::Error("AliAnalysisTaskSECharmTriggerStudy", "This task requires to run on AOD");
         return NULL;
     }
 
@@ -50,7 +50,7 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
     contname = Form("coutputChTriggerRecoTree%s", suffix.Data());
     AliAnalysisDataContainer *coutputrecotree = mgr->CreateContainer(contname.Data(), TTree::Class(), AliAnalysisManager::kOutputContainer, outputdirname.Data());
 
-    contname = Form("coutputChTriggerRecoTree%s", suffix.Data());
+    contname = Form("coutputChTriggerGenTree%s", suffix.Data());
     AliAnalysisDataContainer *coutputgentree = mgr->CreateContainer(contname.Data(), TTree::Class(), AliAnalysisManager::kOutputContainer, outputdirname.Data());
 
     mgr->ConnectInput(chTask, 0, mgr->GetCommonInputContainer());
