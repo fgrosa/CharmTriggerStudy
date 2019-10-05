@@ -253,7 +253,8 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             int decay = -1;
             if(pdgCode == 421 && fEnable2Prongs) //Dzero
             {
-                decay = AliVertexingHFUtils::CheckD0Decay(fMCArray, part, labDau);
+                if(part->GetNDaughters()==2)
+                    decay = AliVertexingHFUtils::CheckD0Decay(fMCArray, part, labDau);
                 if(decay!=1 || labDau[0]<0 || labDau[1]<0)
                     continue;
                 pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
@@ -333,7 +334,6 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             AliAODRecoDecayHF2Prong *d = dynamic_cast<AliAODRecoDecayHF2Prong *>(array2Prong->UncheckedAt(i2Prong));
             if (!d || (d->GetSelectionMap() && !d->HasSelectionBit(AliRDHFCuts::kD0toKpiCuts)))
                 continue;
-
             fHistNEvents->Fill(9);
 
             //check if primary vtx is set
@@ -459,13 +459,12 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     {
         for (int iCasc = 0; iCasc < arrayCasc->GetEntriesFast(); iCasc++)
         {
-            AliAODRecoCascadeHF *lc = dynamic_cast<AliAODRecoCascadeHF *>(arrayDstar->UncheckedAt(iCasc));
+            AliAODRecoCascadeHF *lc = dynamic_cast<AliAODRecoCascadeHF *>(arrayCasc->UncheckedAt(iCasc));
             if (!lc)
                 continue;
             AliAODv0 *v0part = lc->Getv0();
             if (!v0part)
                 continue;
-
             fHistNEvents->Fill(12);
 
             //check if primary vtx is set
@@ -510,18 +509,11 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::Terminate(Option_t */*option*/)
-{
-  /// Terminate analysis
-  //
-  return;
-}
-
-//________________________________________________________________________
 Charm2Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong* cand)
 {
     Charm2Prong ch2Prong;
     ch2Prong.fPt = cand->Pt();
+    ch2Prong.fY = cand->Y(421);
     ch2Prong.fInvMassD0 = cand->InvMassD0();
     ch2Prong.fInvMassD0bar = cand->InvMassD0bar();
     ch2Prong.fCosP = cand->CosPointingAngle();
@@ -534,6 +526,7 @@ Charm2Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayH
 
     int pdgDgD0toKpi[2] = {321, 211};
     ch2Prong.fGenLabel = cand->MatchToMC(421, fMCArray, 2, pdgDgD0toKpi);
+    ch2Prong.fDecay = kNone;
     ch2Prong.fCandType = 0;
     int origin = -1;
     if(ch2Prong.fGenLabel >= 0){
@@ -561,6 +554,8 @@ Charm2Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayH
             ch2Prong.fDecay = kDzerotoKpi;
         else if(pdgCode0 == 211)
             ch2Prong.fDecay = kDzerotopiK;
+        else
+            ch2Prong.fDecay = kNone;
     }
     else {
         ch2Prong.fCandType |= kBackground;
@@ -596,8 +591,11 @@ Charm3Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayH
     int pdgDgDstoKKpi[3] = {321, 321, 211};
     int pdgDgLctopKpi[3] = {2122, 321, 211};
     int origin = -1;
+    ch3Prong.fGenLabel = -1;
+    ch3Prong.fDecay = kNone;
+
     AliAODMCParticle* part3prong = dynamic_cast<AliAODMCParticle*>(fMCArray->At(ch3Prong.fGenLabel));
-    int labDplus = ch3Prong.fGenLabel = cand->MatchToMC(411, fMCArray, 3, pdgDgDplustoKpipi);
+    int labDplus = cand->MatchToMC(411, fMCArray, 3, pdgDgDplustoKpipi);
     int labDs = -1;
     int labDplustoKKpi = -1;
     int labLc = -1;
@@ -694,6 +692,7 @@ Dstar AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, A
     int pdgDgDstartoKpipi[3] = {321, 211, 211};
     int pdgDgD0toKpi[2] = {321, 211};
     dstar.fGenLabel = cand->MatchToMC(413, 421, pdgDgDstartoKpipi, pdgDgD0toKpi, fMCArray);
+    dstar.fDecay = kNone;
     dstar.fCandType = 0;
     int origin = -1;
     if(dstar.fGenLabel >= 0){
@@ -743,6 +742,9 @@ CharmCascade AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCasc
     int pdgDgLctopiLambda[3] = {2122, 211, 211};
     int pdgDgK0s[2] = {211, 211};
     int pdgDgLambda[2] = {2122, 211};
+
+    chCasc.fGenLabel = -1;
+    chCasc.fDecay = kNone;
     int labtoK0s = cand->MatchToMC(4122, 310, pdgDgLctopK0s, pdgDgK0s, fMCArray, true);
     int labtoLambda = -1;
     if (labtoK0s < 0)
