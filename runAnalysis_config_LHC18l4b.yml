@@ -1,0 +1,8 @@
+runtype: local #local, test, grid
+pathtolocalAOD: '.'
+system: pp
+datadir: /alice/sim/2018/LHC18l4b/
+datapattern: AOD
+gridworkdir: testCharmTrigger
+AliPhysicVersion: vAN-20191004_ROOT6-1
+runs: [293898]
