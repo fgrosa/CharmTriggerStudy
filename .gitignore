@@ -2,5 +2,6 @@
 *.d
 *.pcm
 *.xml
+*.root
 stderr
 stdout
