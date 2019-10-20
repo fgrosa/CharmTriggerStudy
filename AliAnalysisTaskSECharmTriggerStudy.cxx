@@ -38,32 +38,6 @@ ClassImp(AliAnalysisTaskSECharmTriggerStudy);
 /// \endcond
 
 //________________________________________________________________________
-AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy() : AliAnalysisTaskSE(),
-    fOutput(nullptr),
-    fHistNEvents(nullptr),
-    fRecoTree(nullptr),
-    fGenTree(nullptr),
-    fEventCuts{},
-    fSystem(kpp),
-    fAOD(nullptr),
-    fAODProtection(1),
-    fMCArray(nullptr),
-    fRecoZvtx(-999.),
-    fGenZvtx(-999.),
-    fCharm2Prong{},
-    fCharm3Prong{},
-    fDstar{},
-    fCharmCascade{},
-    fGenCharmHadron{},
-    fEnable2Prongs(true),
-    fEnable3Prongs(true),
-    fEnableDstars(false),
-    fEnableCascades(false)
-{
-    /// Default constructor
-}
-
-//________________________________________________________________________
 AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const char *name) : AliAnalysisTaskSE(name),
     fOutput(nullptr),
     fHistNEvents(nullptr),
@@ -501,6 +475,12 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     fRecoTree->Fill();
     fGenTree->Fill();
 
+    fCharm2Prong.clear();
+    fCharm3Prong.clear();
+    fDstar.clear();
+    fCharmCascade.clear();
+    fGenCharmHadron.clear();
+
     PostData(1, fOutput);
     PostData(2, fRecoTree);
     PostData(3, fGenTree);
@@ -594,7 +574,6 @@ Charm3Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayH
     ch3Prong.fGenLabel = -1;
     ch3Prong.fDecay = kNone;
 
-    AliAODMCParticle* part3prong = dynamic_cast<AliAODMCParticle*>(fMCArray->At(ch3Prong.fGenLabel));
     int labDplus = cand->MatchToMC(411, fMCArray, 3, pdgDgDplustoKpipi);
     int labDs = -1;
     int labDplustoKKpi = -1;
@@ -651,6 +630,7 @@ Charm3Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayH
     }
 
     if(ch3Prong.fGenLabel >= 0){
+        AliAODMCParticle* part3prong = dynamic_cast<AliAODMCParticle*>(fMCArray->At(ch3Prong.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part3prong, true);
         if(origin == 4)
         {

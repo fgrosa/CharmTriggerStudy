@@ -144,7 +144,6 @@ public:
         kPbPb
     };
 
-    AliAnalysisTaskSECharmTriggerStudy();
     AliAnalysisTaskSECharmTriggerStudy(const char *name = "CharmTriggerStudy");
     virtual ~AliAnalysisTaskSECharmTriggerStudy();
 
@@ -176,7 +175,7 @@ private:
     AliEventCuts fEventCuts;                /// object for event selection
     int fSystem;                            /// system (pp or PbPb)
     AliAODEvent *fAOD;                      //!<! AOD event
-    int fAODProtection;                     ///protection for delta AOD mismatch
+    int fAODProtection;                     /// protection for delta AOD mismatch
     TClonesArray* fMCArray;                 //!<! MC array
     float fRecoZvtx;                        /// Z of the reconstructed primary vertex
     float fGenZvtx;                         /// Z of the generated primary vertex
