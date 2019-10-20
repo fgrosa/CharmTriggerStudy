@@ -4,5 +4,8 @@ system: pp
 datadir: /alice/sim/2018/LHC18l4b/
 datapattern: AOD
 gridworkdir: testCharmTrigger
-AliPhysicVersion: vAN-20191004_ROOT6-1
+AliPhysicVersion: vAN-20191019_ROOT6-1
 runs: [293898]
+improverfiles:
+    currentresol: '$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/ITSgraphs_Current.root'
+    upgraderesol: '$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/ITS2_res_4um_eta0.5.root'

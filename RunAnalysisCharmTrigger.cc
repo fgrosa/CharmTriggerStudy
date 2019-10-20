@@ -7,6 +7,7 @@
 
 #include <TChain.h>
 #include <TGrid.h>
+#include <TNtuple.h>
 
 #include "AliAnalysisAlien.h"
 #include "AliAnalysisManager.h"
@@ -14,6 +15,7 @@
 
 #include "AliPhysicsSelectionTask.h"
 #include "AliAnalysisTaskPIDResponse.h"
+#include "AliAnalysisTaskSEImproveITS3.h"
 #include "AliAnalysisTaskSECleanupVertexingHF.h"
 
 #include "AliAnalysisTaskSECharmTriggerStudy.h"
@@ -63,10 +65,15 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
     }
     else
     {
-        TGrid::Connect("alien://");
+        if(!gGrid)
+            TGrid::Connect("alien://");
+
         if(config["runtype"].as<string>() == "test")
             gridTest = true;
     }
+
+    string resolCurrent = config["improverfiles"]["currentresol"].as<string>();
+    string resolUpgr = config["improverfiles"]["upgraderesol"].as<string>();
 
     // since we will compile a class, tell root where to look for headers
     gInterpreter->ProcessLine(".include $ROOTSYS/include");
@@ -79,6 +86,14 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
 
     AliPhysicsSelectionTask *physseltask = reinterpret_cast<AliPhysicsSelectionTask *>(gInterpreter->ProcessLine(Form(".x %s (%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"),isRunOnMC)));
     AliAnalysisTaskPIDResponse *pidResp = reinterpret_cast<AliAnalysisTaskPIDResponse *>(gInterpreter->ProcessLine(Form(".x %s (%d)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"),isRunOnMC)));
+
+    if(resolCurrent!="" && resolUpgr!="")
+    {
+        if(!gGrid)
+            TGrid::Connect("alien://");
+
+        AliAnalysisTaskSEImproveITS3* taskimpr = reinterpret_cast<AliAnalysisTaskSEImproveITS3 *>(gInterpreter->ProcessLine(Form(".x %s(%d,\"%s\",\"%s\",%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/AddTaskImproverUpgrade.C"),false, resolCurrent.data(), resolUpgr.data(), 0)));
+    }
 
     gInterpreter->ProcessLine(".L AliAnalysisTaskSECharmTriggerStudy.cxx+g");
     AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy*>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, true, true, "Test")));
