@@ -1,9 +1,10 @@
-runtype: local #local, test, grid
+runtype: grid #local, test, grid
 pathtolocalAOD: '.'
 system: pp
 datadir: /alice/sim/2018/LHC18l4b/
 datapattern: AOD
 gridworkdir: testCharmTrigger
+splitmaxinputfilenum: 20
 AliPhysicVersion: vAN-20191019_ROOT6-1
 runs: [293898]
 improverfiles:

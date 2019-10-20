@@ -33,6 +33,7 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
     string gridDataDir = config["datadir"].as<string>();
     string gridDataPattern = config["datapattern"].as<string>();
     string gridWorkingDir = config["gridworkdir"].as<string>();
+    int splitmaxinputfilenum = config["splitmaxinputfilenum"].as<int>();
 
     string sSystem = config["system"].as<string>();
     int System=-1;
@@ -89,14 +90,11 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
 
     if(resolCurrent!="" && resolUpgr!="")
     {
-        if(!gGrid)
-            TGrid::Connect("alien://");
-
         AliAnalysisTaskSEImproveITS3* taskimpr = reinterpret_cast<AliAnalysisTaskSEImproveITS3 *>(gInterpreter->ProcessLine(Form(".x %s(%d,\"%s\",\"%s\",%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/AddTaskImproverUpgrade.C"),false, resolCurrent.data(), resolUpgr.data(), 0)));
     }
 
     gInterpreter->ProcessLine(".L AliAnalysisTaskSECharmTriggerStudy.cxx+g");
-    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy*>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, true, true, "Test")));
+    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, false, false, "Test")));
 
     if(System==AliAnalysisTaskSECharmTriggerStudy::kPbPb) {
         AliAnalysisTaskSECleanupVertexingHF *taskclean =reinterpret_cast<AliAnalysisTaskSECleanupVertexingHF *>(gInterpreter->ProcessLine(Form(".x %s", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskCleanupVertexingHF.C"))));
@@ -154,12 +152,12 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
         alienHandler->SetNrunsPerMaster(nruns);
 
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(1);
-        alienHandler->SetExecutable("myTask.sh");
+        alienHandler->SetSplitMaxInputFileNumber(splitmaxinputfilenum);
+        alienHandler->SetExecutable("CharmTriggerStudy.sh");
 
         // specify how many seconds your job may take
         alienHandler->SetTTL(10000);
-        alienHandler->SetJDLName("myTask.jdl");
+        alienHandler->SetJDLName("CharmTriggerStudy.jdl");
 
         alienHandler->SetOutputToRunNo(true);
         alienHandler->SetKeepLogs(true);
