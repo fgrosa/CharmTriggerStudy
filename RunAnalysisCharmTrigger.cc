@@ -94,7 +94,7 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
     }
 
     gInterpreter->ProcessLine(".L AliAnalysisTaskSECharmTriggerStudy.cxx+g");
-    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, false, false, "Test")));
+    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, false, false, false, "BackgroundAndSignal")));
 
     if(System==AliAnalysisTaskSECharmTriggerStudy::kPbPb) {
         AliAnalysisTaskSECleanupVertexingHF *taskclean =reinterpret_cast<AliAnalysisTaskSECleanupVertexingHF *>(gInterpreter->ProcessLine(Form(".x %s", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskCleanupVertexingHF.C"))));
@@ -149,14 +149,14 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
 
         for(int k=0; k<nruns; k++)
             alienHandler->AddRunNumber(runlist[k]);
-        alienHandler->SetNrunsPerMaster(nruns);
+        alienHandler->SetNrunsPerMaster(1);
 
         // number of files per subjob
         alienHandler->SetSplitMaxInputFileNumber(splitmaxinputfilenum);
         alienHandler->SetExecutable("CharmTriggerStudy.sh");
 
         // specify how many seconds your job may take
-        alienHandler->SetTTL(10000);
+        alienHandler->SetTTL(30000);
         alienHandler->SetJDLName("CharmTriggerStudy.jdl");
 
         alienHandler->SetOutputToRunNo(true);
