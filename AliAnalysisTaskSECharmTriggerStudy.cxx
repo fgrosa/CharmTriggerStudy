@@ -690,7 +690,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, Al
     dstar.fDecay = kNone;
     dstar.fCandType = 0;
     int origin = -1;
-    if(dstar.fGenLabel >= 0)
+    if(dstar.fGenLabel < 0)
     {
         dstar.fCandType |= kBackground;
         if(fFillOnlySignal)
@@ -698,8 +698,8 @@ void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, Al
     }
     else
     {
-        AliAODMCParticle* partD0 = dynamic_cast<AliAODMCParticle*>(fMCArray->At(dstar.fGenLabel));
-        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
+        AliAODMCParticle* partDstar = dynamic_cast<AliAODMCParticle*>(fMCArray->At(dstar.fGenLabel));
+        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partDstar, true);
         if(origin == 4)
         {
             dstar.fCandType |= kSignal;
