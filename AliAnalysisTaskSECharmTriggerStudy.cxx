@@ -58,7 +58,8 @@ AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const cha
     fEnable2Prongs(true),
     fEnable3Prongs(true),
     fEnableDstars(false),
-    fEnableCascades(false)
+    fEnableCascades(false),
+    fFillOnlySignal(true)
 {
     /// Default constructor
 
@@ -233,15 +234,15 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                     continue;
                 pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
                 if(TMath::Abs(pdgCodeDau0) == 321)
-                    fGenCharmHadron.push_back(FillCharmGen(part, origin, kDzerotoKpi));
+                    FillCharmGen(part, origin, kDzerotoKpi);
                 else
-                    fGenCharmHadron.push_back(FillCharmGen(part, origin, kDzerotopiK));
+                    FillCharmGen(part, origin, kDzerotopiK);
             }
             else if(pdgCode == 411 && fEnable3Prongs) //Dplus
             {
                 decay = AliVertexingHFUtils::CheckDplusDecay(fMCArray, part, labDau);
                 if(decay>=1 && labDau[0]>=0 && labDau[1]>=0) {
-                    fGenCharmHadron.push_back(FillCharmGen(part, origin, kDplustoKpipi));
+                    FillCharmGen(part, origin, kDplustoKpipi);
                     continue;
                 }
                 decay = AliVertexingHFUtils::CheckDplusKKpiDecay(fMCArray, part, labDau);
@@ -250,9 +251,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
                 pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
                 if(TMath::Abs(pdgCodeDau0) == 321)
-                    fGenCharmHadron.push_back(FillCharmGen(part, origin, kDplustoKKpi));
+                    FillCharmGen(part, origin, kDplustoKKpi);
                 else
-                    fGenCharmHadron.push_back(FillCharmGen(part, origin, kDplustopiKK));
+                    FillCharmGen(part, origin, kDplustopiKK);
             }
             else if(pdgCode == 431 && fEnable3Prongs) //Ds
             {
@@ -261,16 +262,16 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                     continue;
                 pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
                 if(TMath::Abs(pdgCodeDau0) == 321)
-                    fGenCharmHadron.push_back(FillCharmGen(part, origin, kDstoKKpi));
+                    FillCharmGen(part, origin, kDstoKKpi);
                 else
-                    fGenCharmHadron.push_back(FillCharmGen(part, origin, kDstopiKK));
+                    FillCharmGen(part, origin, kDstopiKK);
             }
             else if(pdgCode == 413 && fEnableDstars) //Dstar
             {
                 decay = AliVertexingHFUtils::CheckDstarDecay(fMCArray, part, labDau);
                 if(decay!=1 || labDau[0]<0 || labDau[1]<0)
                     continue;
-                fGenCharmHadron.push_back(FillCharmGen(part, origin, kDstartoKpipi));
+                FillCharmGen(part, origin, kDstartoKpipi);
             }
             else if(pdgCode == 4122) //Lc
             {
@@ -280,9 +281,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                     if(decay>=1 && labDau[0]>=0 && labDau[1]>=0) {
                         pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
                         if(TMath::Abs(pdgCodeDau0) == 2212)
-                            fGenCharmHadron.push_back(FillCharmGen(part, origin, kLctopKpi));
+                            FillCharmGen(part, origin, kLctopKpi);
                         else
-                            fGenCharmHadron.push_back(FillCharmGen(part, origin, kLctopiKp));
+                            FillCharmGen(part, origin, kLctopiKp);
                         continue;
                     }
                 }
@@ -291,9 +292,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                     decay = AliVertexingHFUtils::CheckLcV0bachelorDecay(fMCArray, part, labDau);
                     if(labDau[0]>=0 && labDau[1]>=0) {
                         if(decay == 1)
-                            fGenCharmHadron.push_back(FillCharmGen(part, origin, kLctopiLambda));
+                            FillCharmGen(part, origin, kLctopiLambda);
                         else if(decay == 2)
-                            fGenCharmHadron.push_back(FillCharmGen(part, origin, kLctopK0s));
+                            FillCharmGen(part, origin, kLctopK0s);
                     }
                 }
             }
@@ -332,7 +333,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             }
 
             //fill vector of 2prongs
-            fCharm2Prong.push_back(FillCharm2Prong(d));
+            FillCharm2Prong(d);
 
             if(isvtxrecalc)
                 CleanOwnPrimaryVertex(d, origownvtx);
@@ -374,7 +375,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             }
 
             //fill vector of 3prongs
-            fCharm3Prong.push_back(FillCharm3Prong(d));
+            FillCharm3Prong(d);
 
             if(isvtxrecalc)
                 CleanOwnPrimaryVertex(d, origownvtx);
@@ -419,7 +420,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             }
 
             //fill vector of dstars
-            fDstar.push_back(FillDstar(d, d0));
+            FillDstar(d, d0);
 
             if(isvtxrecalc)
                 CleanOwnPrimaryVertex(d, origownvtx);
@@ -463,7 +464,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             }
 
             //fill vector of cascades
-            fCharmCascade.push_back(FillCharmCascade(lc, v0part));
+            FillCharmCascade(lc, v0part);
 
             if(isvtxrecalc)
                 CleanOwnPrimaryVertex(lc, origownvtx);
@@ -489,7 +490,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 }
 
 //________________________________________________________________________
-Charm2Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong* cand)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong* cand)
 {
     Charm2Prong ch2Prong;
     ch2Prong.fPt = cand->Pt();
@@ -509,7 +510,13 @@ Charm2Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayH
     ch2Prong.fDecay = kNone;
     ch2Prong.fCandType = 0;
     int origin = -1;
-    if(ch2Prong.fGenLabel >= 0){
+    if(ch2Prong.fGenLabel < 0){
+        ch2Prong.fCandType |= kBackground;
+        if(fFillOnlySignal)
+            return;
+    }
+    else
+    {
         AliAODMCParticle* partD0 = dynamic_cast<AliAODMCParticle*>(fMCArray->At(ch2Prong.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
         if(origin == 4)
@@ -537,15 +544,12 @@ Charm2Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayH
         else
             ch2Prong.fDecay = kNone;
     }
-    else {
-        ch2Prong.fCandType |= kBackground;
-    }
 
-    return ch2Prong;
+    fCharm2Prong.push_back(ch2Prong);
 }
 
 //________________________________________________________________________
-Charm3Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong* cand)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong* cand)
 {
     Charm3Prong ch3Prong;
     ch3Prong.fPt = cand->Pt();
@@ -566,6 +570,13 @@ Charm3Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayH
     ch3Prong.fNormDecayLength = cand->NormalizedDecayLength();
     ch3Prong.fNormDecayLengthXY = cand->NormalizedDecayLengthXY();
     ch3Prong.fSigmaVtx = cand->GetSigmaVert();
+    ch3Prong.fSelBit = 0;
+    if(cand->HasSelectionBit(AliRDHFCuts::kDplusCuts))
+        ch3Prong.fSelBit |= kDplustoKpipiCuts;
+    if(cand->HasSelectionBit(AliRDHFCuts::kDsCuts))
+        ch3Prong.fSelBit |= kDstoKKpiCuts;
+    if(cand->HasSelectionBit(AliRDHFCuts::kLcCuts))
+        ch3Prong.fSelBit |= kLctopKpiCuts;
 
     int pdgDgDplustoKpipi[3] = {321, 211, 211};
     int pdgDgDstoKKpi[3] = {321, 321, 211};
@@ -629,7 +640,14 @@ Charm3Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayH
         ch3Prong.fDecay = kDplustoKpipi;
     }
 
-    if(ch3Prong.fGenLabel >= 0){
+    if(ch3Prong.fGenLabel < 0)
+    {
+        ch3Prong.fCandType |= kBackground;
+        if(fFillOnlySignal)
+            return;
+    }
+    else
+    {
         AliAODMCParticle* part3prong = dynamic_cast<AliAODMCParticle*>(fMCArray->At(ch3Prong.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part3prong, true);
         if(origin == 4)
@@ -647,15 +665,12 @@ Charm3Prong AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayH
             ch3Prong.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
         }
     }
-    else {
-        ch3Prong.fCandType |= kBackground;
-    }
 
-    return ch3Prong;
+    fCharm3Prong.push_back(ch3Prong);
 }
 
 //________________________________________________________________________
-Dstar AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau)
+void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau)
 {
     Dstar dstar;
     dstar.fInvMass = cand->InvMassDstarKpipi();
@@ -675,7 +690,14 @@ Dstar AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, A
     dstar.fDecay = kNone;
     dstar.fCandType = 0;
     int origin = -1;
-    if(dstar.fGenLabel >= 0){
+    if(dstar.fGenLabel >= 0)
+    {
+        dstar.fCandType |= kBackground;
+        if(fFillOnlySignal)
+            return;
+    }
+    else
+    {
         AliAODMCParticle* partD0 = dynamic_cast<AliAODMCParticle*>(fMCArray->At(dstar.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
         if(origin == 4)
@@ -694,15 +716,12 @@ Dstar AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, A
         }
         dstar.fDecay = kDstartoKpipi;
     }
-    else {
-        dstar.fCandType |= kBackground;
-    }
 
-    return dstar;
+    fDstar.push_back(dstar);
 }
 
 //________________________________________________________________________
-CharmCascade AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau)
 {
     CharmCascade chCasc;
 
@@ -744,7 +763,14 @@ CharmCascade AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCasc
 
     chCasc.fCandType = 0;
     int origin = -1;
-    if(chCasc.fGenLabel >= 0){
+    if(chCasc.fGenLabel < 0)
+    {
+        chCasc.fCandType |= kBackground;
+        if(fFillOnlySignal)
+            return;
+    }
+    else
+    {
         AliAODMCParticle* partD0 = dynamic_cast<AliAODMCParticle*>(fMCArray->At(chCasc.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
         if(origin == 4)
@@ -762,15 +788,12 @@ CharmCascade AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCasc
             chCasc.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
         }
     }
-    else {
-        chCasc.fCandType |= kBackground;
-    }
 
-    return chCasc;
+    fCharmCascade.push_back(chCasc);
 }
 
 //________________________________________________________________________
-GenCharmHadron AliAnalysisTaskSECharmTriggerStudy::FillCharmGen(AliAODMCParticle* part, int origin, int decay)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharmGen(AliAODMCParticle* part, int origin, int decay)
 {
     GenCharmHadron genCharm;
     genCharm.fPt = part->Pt();
@@ -782,7 +805,7 @@ GenCharmHadron AliAnalysisTaskSECharmTriggerStudy::FillCharmGen(AliAODMCParticle
         genCharm.fCandType |= kFeedDown;
     genCharm.fDecay = decay;
 
-    return genCharm;
+    fGenCharmHadron.push_back(genCharm);
 }
 
 //________________________________________________________________________

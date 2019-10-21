@@ -3,6 +3,7 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
                                                              bool enable3prongs = true,
                                                              bool enableDstars = false,
                                                              bool enableCascades = false,
+                                                             bool fillOnlySignal = false,
                                                              TString suffix = "")
 {
     //

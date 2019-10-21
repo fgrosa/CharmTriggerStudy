@@ -38,7 +38,7 @@ struct Charm2Prong
     Double32_t fDecayLengthXY;          //[0.0,6.5536,16]
     Double32_t fNormDecayLength;        //[0.0,102.4.,10]
     Double32_t fNormDecayLengthXY;      //[0.0,102.4,10]
-    Double32_t fImpParProd;             //[-3276.8,3276.8,16]
+    Double32_t fImpParProd;             //[-3.2768,3.2768,16]
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
@@ -67,6 +67,7 @@ struct Charm3Prong
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
+    unsigned char fSelBit;              /// selection bit
 };
 
 struct Dstar
@@ -138,6 +139,16 @@ public:
         kLctopiLambda
     };
 
+    enum kSelBit
+    {
+        kDzerotoKpiCuts = BIT(0),
+        kDplustoKpipiCuts = BIT(1),
+        kDstartoKpipiCuts = BIT(2),
+        kDstoKKpiCuts = BIT(3),
+        kLctopKpiCuts = BIT(4),
+        kLctoV0bachCuts = BIT(5)
+    };
+
     enum kSystem
     {
         kpp,
@@ -159,11 +170,11 @@ public:
 
 private:
 
-    Charm2Prong FillCharm2Prong(AliAODRecoDecayHF2Prong* cand);
-    Charm3Prong FillCharm3Prong(AliAODRecoDecayHF3Prong* cand);
-    Dstar FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau);
-    CharmCascade FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau);
-    GenCharmHadron FillCharmGen(AliAODMCParticle* part, int origin, int decay);
+    void FillCharm2Prong(AliAODRecoDecayHF2Prong* cand);
+    void FillCharm3Prong(AliAODRecoDecayHF3Prong* cand);
+    void FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau);
+    void FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau);
+    void FillCharmGen(AliAODMCParticle* part, int origin, int decay);
     bool RecalcOwnPrimaryVertex(AliAODRecoDecayHF* cand);
     void CleanOwnPrimaryVertex(AliAODRecoDecayHF* cand, AliAODVertex* origvtx);
 
@@ -190,8 +201,9 @@ private:
     bool fEnable3Prongs;                    /// flag to enable 3-prong branch
     bool fEnableDstars;                     /// flag to enable Dstar branch
     bool fEnableCascades;                   /// flag to enable cascade branch
+    bool fFillOnlySignal;                   /// flag to fill only signal
 
-    ClassDef(AliAnalysisTaskSECharmTriggerStudy, 1);
+    ClassDef(AliAnalysisTaskSECharmTriggerStudy, 2);
 };
 
 #endif
