@@ -35,6 +35,7 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
     chTask->Enable3Prongs(enable3prongs);
     chTask->EnableDstars(enableDstars);
     chTask->EnableCascades(enableCascades);
+    chTask->SetFillOnlySignal(fillOnlySignal);
     chTask->SetSystem(system);
     mgr->AddTask(chTask);
 

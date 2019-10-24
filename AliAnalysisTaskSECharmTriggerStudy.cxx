@@ -59,7 +59,7 @@ AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const cha
     fEnable3Prongs(true),
     fEnableDstars(false),
     fEnableCascades(false),
-    fFillOnlySignal(true)
+    fFillOnlySignal(false)
 {
     /// Default constructor
 
@@ -684,7 +684,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, Al
     dstar.fNormDecayLengthD0 = dau->NormalizedDecayLength();
     dstar.fNormDecayLengthXYD0 = dau->NormalizedDecayLengthXY();
 
-    int pdgDgDstartoKpipi[3] = {321, 211, 211};
+    int pdgDgDstartoD0pi[3] = {421, 211};
     int pdgDgD0toKpi[2] = {321, 211};
     dstar.fGenLabel = cand->MatchToMC(413, 421, pdgDgDstartoKpipi, pdgDgD0toKpi, fMCArray);
     dstar.fDecay = kNone;
@@ -737,8 +737,8 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* c
     chCasc.fCosPV0 = cand->CosV0PointingAngle();
     chCasc.fCosPXYV0 = cand->CosV0PointingAngleXY();
 
-    int pdgDgLctopK0s[3] = {2122, 211, 211};
-    int pdgDgLctopiLambda[3] = {2122, 211, 211};
+    int pdgDgLctopK0s[2] = {2212,310};
+    int pdgDgLctopiLambda[2] = {3122, 211};
     int pdgDgK0s[2] = {211, 211};
     int pdgDgLambda[2] = {2122, 211};
 
@@ -771,8 +771,8 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* c
     }
     else
     {
-        AliAODMCParticle* partD0 = dynamic_cast<AliAODMCParticle*>(fMCArray->At(chCasc.fGenLabel));
-        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
+        AliAODMCParticle* partCasc = dynamic_cast<AliAODMCParticle*>(fMCArray->At(chCasc.fGenLabel));
+        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partCasc, true);
         if(origin == 4)
         {
             chCasc.fCandType |= kSignal;

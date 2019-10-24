@@ -161,10 +161,11 @@ public:
     virtual void UserCreateOutputObjects();
     virtual void UserExec(Option_t *option);
 
-    void Enable2Prongs(bool enable = true)  {fEnable2Prongs = enable;}
-    void Enable3Prongs(bool enable = true)  {fEnable3Prongs = enable;}
-    void EnableDstars(bool enable = true)   {fEnableDstars = enable;}
-    void EnableCascades(bool enable = true) {fEnableCascades = enable;}
+    void Enable2Prongs(bool enable = true)             {fEnable2Prongs = enable;}
+    void Enable3Prongs(bool enable = true)             {fEnable3Prongs = enable;}
+    void EnableDstars(bool enable = true)              {fEnableDstars = enable;}
+    void EnableCascades(bool enable = true)            {fEnableCascades = enable;}
+    void SetFillOnlySignal(bool fillonlysignal = true) {fFillOnlySignal = fillonlysignal;}
 
     void SetSystem(int system = kpp) {fSystem = system;}
 
