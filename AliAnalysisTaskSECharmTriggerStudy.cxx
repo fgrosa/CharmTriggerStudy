@@ -59,9 +59,87 @@ AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const cha
     fEnable3Prongs(true),
     fEnableDstars(false),
     fEnableCascades(false),
-    fFillOnlySignal(false)
+    fFillOnlySignal(false),
+    fCutsD0toKpi("fCutsD0toKpi"),
+    fCutsDplustoKpipi("fCutsDplustoKpipi"),
+    fCutsDstartoKpipi("fCutsDstartoKpipi"),
+    fCutsDstoKKpi("fCutsDstoKKpi"),
+    fCutsLctopKpi("fCutsLctopKpi"),
+    fCutsLctoV0bach("fCutsLctoV0bach")
 {
     /// Default constructor
+
+    float ptbins[2] = {0., 100.};
+
+    if (fEnable2Prongs)
+    {
+        fCutsD0toKpi.SetPtBins(2, ptbins);
+        fCutsD0toKpi.SetUsePID(true);
+        AliAODPidHF *pidObj = new AliAODPidHF();
+        int mode = 1;
+        const Int_t nlims = 2;
+        double plims[nlims] = {0.6, 0.8};
+        bool compat = true;
+        bool asym = true;
+        double sigmas[5] = {2., 1., 0., 3., 0.};
+        pidObj->SetAsym(asym);
+        pidObj->SetMatch(mode);
+        pidObj->SetPLimit(plims, nlims);
+        pidObj->SetSigma(sigmas);
+        pidObj->SetCompat(compat);
+        pidObj->SetTPC(true);
+        pidObj->SetTOF(true);
+        fCutsD0toKpi.SetPidHF(pidObj);
+        fCutsD0toKpi.SetUseDefaultPID(false);
+    }
+    if (fEnable3Prongs)
+    {
+        fCutsDplustoKpipi.SetPtBins(2, ptbins);
+        fCutsDplustoKpipi.SetUsePID(true);
+        fCutsDstoKKpi.SetPtBins(2, ptbins);
+        fCutsDstoKKpi.SetUsePID(true);
+        fCutsLctopKpi.SetPtBins(2, ptbins);
+
+        fCutsLctopKpi.SetUsePID(true);
+        AliAODPidHF *pidObjp = new AliAODPidHF();
+        AliAODPidHF *pidObjK = new AliAODPidHF();
+        AliAODPidHF *pidObjpi = new AliAODPidHF();
+        pidObjp->SetMatch(1);
+        pidObjK->SetMatch(1);
+        pidObjpi->SetMatch(1);
+        pidObjp->SetTPC(true);
+        pidObjK->SetTPC(true);
+        pidObjpi->SetTPC(true);
+        pidObjp->SetTOF(true);
+        pidObjK->SetTOF(true);
+        pidObjpi->SetTOF(true);
+        fCutsLctopKpi.SetPidprot(pidObjp);
+        fCutsLctopKpi.SetPidHF(pidObjK);
+        fCutsLctopKpi.SetPidpion(pidObjpi);
+        fCutsLctopKpi.GetPidHF()->SetCombDetectors(AliAODPidHF::kTPCTOF);
+        for (int iSpecies = 0; iSpecies < AliPID::kSPECIES; ++iSpecies)
+            fCutsLctopKpi.SetPIDThreshold(static_cast<AliPID::EParticleType>(iSpecies), 0.);
+        fCutsLctopKpi.GetPidHF()->SetUseCombined(true);
+        fCutsLctopKpi.GetPidHF()->SetUpCombinedPID();
+        fCutsLctopKpi.SetPIDStrategy(AliRDHFCutsLctopKpi::kCombinedpPb);
+    }
+    if (fEnableDstars)
+    {
+        fCutsDstartoKpipi.SetPtBins(2, ptbins);
+        fCutsDstartoKpipi.SetUsePID(true);
+        AliAODPidHF *pidObj = new AliAODPidHF();
+        pidObj->SetMatch(1);
+        pidObj->SetSigma(0, 2);
+        pidObj->SetSigma(3, 3);
+        pidObj->SetTPC(true);
+        pidObj->SetTOF(true);
+        fCutsDstartoKpipi.SetPidHF(pidObj);
+    }
+    if (fEnableCascades)
+    {
+        fCutsLctoV0bach.SetPtBins(2, ptbins);
+        fCutsLctoV0bach.SetUsePID(true);
+    }
 
     DefineOutput(1, TList::Class());
     DefineOutput(2, TTree::Class());
@@ -72,9 +150,12 @@ AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const cha
 AliAnalysisTaskSECharmTriggerStudy::~AliAnalysisTaskSECharmTriggerStudy()
 {
     // Destructor
-    if(fOutput) delete fOutput;
-    if(fRecoTree) delete fRecoTree;
-    if(fGenTree) delete fGenTree;
+    if (fOutput)
+        delete fOutput;
+    if (fRecoTree)
+        delete fRecoTree;
+    if (fGenTree)
+        delete fGenTree;
 }
 
 //________________________________________________________________________
@@ -104,13 +185,13 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
 
     fRecoTree = new TTree("fRecoTree", "Reconstructed charm hadron candidates");
     fRecoTree->Branch("zVtxReco", &fRecoZvtx);
-    if(fEnable2Prongs)
+    if (fEnable2Prongs)
         fRecoTree->Branch("Charm2Prong", &fCharm2Prong);
-    if(fEnable3Prongs)
+    if (fEnable3Prongs)
         fRecoTree->Branch("Charm3Prong", &fCharm3Prong);
-    if(fEnableDstars)
+    if (fEnableDstars)
         fRecoTree->Branch("Dstar", &fDstar);
-    if(fEnableCascades)
+    if (fEnableCascades)
         fRecoTree->Branch("CharmCascade", &fCharmCascade);
 
     fGenTree = new TTree("fGenTree", "Generate charm hadrons");
@@ -180,7 +261,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
     fEventCuts.AcceptEvent(fAOD); // do not return yet (no physics selection applied for upgrade MC)
 
-    if(!fEventCuts.PassedCut(AliEventCuts::kVertex) || !fEventCuts.PassedCut(AliEventCuts::kVertexPosition) || !fEventCuts.PassedCut(AliEventCuts::kVertexQuality))
+    if (!fEventCuts.PassedCut(AliEventCuts::kVertex) || !fEventCuts.PassedCut(AliEventCuts::kVertexPosition) || !fEventCuts.PassedCut(AliEventCuts::kVertexQuality))
     {
         fHistNEvents->Fill(5); // rejected for primary vtx
         PostData(1, fOutput);
@@ -189,112 +270,141 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
     fHistNEvents->Fill(6); // selected event
 
-    fMCArray = dynamic_cast<TClonesArray*>(fAOD->GetList()->FindObject(AliAODMCParticle::StdBranchName()));
-    if(!fMCArray)
+    fMCArray = dynamic_cast<TClonesArray *>(fAOD->GetList()->FindObject(AliAODMCParticle::StdBranchName()));
+    if (!fMCArray)
     {
-      AliWarning("MC particles branch not found!");
-      return;
+        AliWarning("MC particles branch not found!");
+        return;
     }
 
     // load MC header
-    AliAODMCHeader* mcHeader = dynamic_cast<AliAODMCHeader*>(fAOD->GetList()->FindObject(AliAODMCHeader::StdBranchName()));
-    if(!mcHeader)
+    AliAODMCHeader *mcHeader = dynamic_cast<AliAODMCHeader *>(fAOD->GetList()->FindObject(AliAODMCHeader::StdBranchName()));
+    if (!mcHeader)
     {
-      AliWarning("MC header branch not found!");
-      return;
+        AliWarning("MC header branch not found!");
+        return;
     }
 
     fGenZvtx = mcHeader->GetVtxZ();
 
-    AliAODVertex *primVtx = dynamic_cast<AliAODVertex*>(fAOD->GetPrimaryVertex());
+    AliAODVertex *primVtx = dynamic_cast<AliAODVertex *>(fAOD->GetPrimaryVertex());
     fRecoZvtx = primVtx->GetZ();
+
+    if (fEnable2Prongs)
+    {
+        fCutsD0toKpi.SetupPID(fAOD);
+    }
+    if (fEnable3Prongs)
+    {
+        fCutsDplustoKpipi.SetupPID(fAOD);
+        fCutsDstoKKpi.SetupPID(fAOD);
+        fCutsLctopKpi.SetupPID(fAOD);
+    }
+    if (fEnableDstars)
+    {
+        fCutsDstartoKpipi.SetupPID(fAOD);
+    }
+    if (fEnableCascades)
+    {
+        fCutsLctoV0bach.SetupPID(fAOD);
+    }
 
     //loop on generated particles
     for (int iPart = 0; iPart < fMCArray->GetEntriesFast(); iPart++)
     {
-        AliAODMCParticle* part = dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(iPart));
-        if(!part)
+        AliAODMCParticle *part = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(iPart));
+        if (!part)
             continue;
 
         int pdgCode = TMath::Abs(part->GetPdgCode());
-        if(pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122)
+        if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122)
         {
             int origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part, true);
-            if(origin != 4 && origin != 5)
+            if (origin != 4 && origin != 5)
                 continue; //keep only prompt or feed-down
 
             int labDau[3] = {-1, -1, -1};
             int pdgCodeDau0 = -1;
             int decay = -1;
-            if(pdgCode == 421 && fEnable2Prongs) //Dzero
+            bool dauInAcc = false;
+            if (pdgCode == 421 && fEnable2Prongs) //Dzero
             {
-                if(part->GetNDaughters()==2)
+                if (part->GetNDaughters() == 2)
                     decay = AliVertexingHFUtils::CheckD0Decay(fMCArray, part, labDau);
-                if(decay!=1 || labDau[0]<0 || labDau[1]<0)
+                if (decay != 1 || labDau[0] < 0 || labDau[1] < 0)
                     continue;
-                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                if(TMath::Abs(pdgCodeDau0) == 321)
-                    FillCharmGen(part, origin, kDzerotoKpi);
+                dauInAcc = AreDauInAcc(2, labDau);
+                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                if (TMath::Abs(pdgCodeDau0) == 321)
+                    FillCharmGen(part, origin, kDzerotoKpi, dauInAcc);
                 else
-                    FillCharmGen(part, origin, kDzerotopiK);
+                    FillCharmGen(part, origin, kDzerotopiK, dauInAcc);
             }
-            else if(pdgCode == 411 && fEnable3Prongs) //Dplus
+            else if (pdgCode == 411 && fEnable3Prongs) //Dplus
             {
                 decay = AliVertexingHFUtils::CheckDplusDecay(fMCArray, part, labDau);
-                if(decay>=1 && labDau[0]>=0 && labDau[1]>=0) {
-                    FillCharmGen(part, origin, kDplustoKpipi);
+                if (decay >= 1 && labDau[0] >= 0 && labDau[1] >= 0)
+                {
+                    FillCharmGen(part, origin, kDplustoKpipi, dauInAcc);
                     continue;
                 }
                 decay = AliVertexingHFUtils::CheckDplusKKpiDecay(fMCArray, part, labDau);
-                if(decay!=1 && labDau[0]<0 && labDau[1]<0)
+                if (decay != 1 && labDau[0] < 0 && labDau[1] < 0)
                     continue;
+                dauInAcc = AreDauInAcc(3, labDau);
 
-                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                if(TMath::Abs(pdgCodeDau0) == 321)
-                    FillCharmGen(part, origin, kDplustoKKpi);
+                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                if (TMath::Abs(pdgCodeDau0) == 321)
+                    FillCharmGen(part, origin, kDplustoKKpi, dauInAcc);
                 else
-                    FillCharmGen(part, origin, kDplustopiKK);
+                    FillCharmGen(part, origin, kDplustopiKK, dauInAcc);
             }
-            else if(pdgCode == 431 && fEnable3Prongs) //Ds
+            else if (pdgCode == 431 && fEnable3Prongs) //Ds
             {
                 decay = AliVertexingHFUtils::CheckDsDecay(fMCArray, part, labDau);
-                if(decay!=1 || labDau[0]<0 || labDau[1]<0) //keep only Ds -> phipi --> KKpi (to be discussed)
+                if (decay != 1 || labDau[0] < 0 || labDau[1] < 0) //keep only Ds -> phipi --> KKpi (to be discussed)
                     continue;
-                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                if(TMath::Abs(pdgCodeDau0) == 321)
-                    FillCharmGen(part, origin, kDstoKKpi);
+                dauInAcc = AreDauInAcc(3, labDau);
+                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                if (TMath::Abs(pdgCodeDau0) == 321)
+                    FillCharmGen(part, origin, kDstoKKpi, dauInAcc);
                 else
-                    FillCharmGen(part, origin, kDstopiKK);
+                    FillCharmGen(part, origin, kDstopiKK, dauInAcc);
             }
-            else if(pdgCode == 413 && fEnableDstars) //Dstar
+            else if (pdgCode == 413 && fEnableDstars) //Dstar
             {
                 decay = AliVertexingHFUtils::CheckDstarDecay(fMCArray, part, labDau);
-                if(decay!=1 || labDau[0]<0 || labDau[1]<0)
+                if (decay != 1 || labDau[0] < 0 || labDau[1] < 0)
                     continue;
-                FillCharmGen(part, origin, kDstartoKpipi);
+                dauInAcc = AreDauInAcc(3, labDau);
+                FillCharmGen(part, origin, kDstartoKpipi, dauInAcc);
             }
-            else if(pdgCode == 4122) //Lc
+            else if (pdgCode == 4122) //Lc
             {
-                if(fEnable3Prongs)
+                if (fEnable3Prongs)
                 {
                     decay = AliVertexingHFUtils::CheckLcpKpiDecay(fMCArray, part, labDau);
-                    if(decay>=1 && labDau[0]>=0 && labDau[1]>=0) {
-                        pdgCodeDau0 = (dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                        if(TMath::Abs(pdgCodeDau0) == 2212)
-                            FillCharmGen(part, origin, kLctopKpi);
+                    dauInAcc = AreDauInAcc(3, labDau);
+                    if (decay >= 1 && labDau[0] >= 0 && labDau[1] >= 0)
+                    {
+                        pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                        if (TMath::Abs(pdgCodeDau0) == 2212)
+                            FillCharmGen(part, origin, kLctopKpi, dauInAcc);
                         else
-                            FillCharmGen(part, origin, kLctopiKp);
+                            FillCharmGen(part, origin, kLctopiKp, dauInAcc);
                         continue;
                     }
                 }
-                if(fEnableCascades)
+                if (fEnableCascades)
                 {
                     decay = AliVertexingHFUtils::CheckLcV0bachelorDecay(fMCArray, part, labDau);
-                    if(labDau[0]>=0 && labDau[1]>=0) {
-                        if(decay == 1)
-                            FillCharmGen(part, origin, kLctopiLambda);
-                        else if(decay == 2)
-                            FillCharmGen(part, origin, kLctopK0s);
+                    dauInAcc = AreDauInAcc(3, labDau);
+                    if (labDau[0] >= 0 && labDau[1] >= 0)
+                    {
+                        if (decay == 1)
+                            FillCharmGen(part, origin, kLctopiLambda, dauInAcc);
+                        else if (decay == 2)
+                            FillCharmGen(part, origin, kLctopK0s, dauInAcc);
                     }
                 }
             }
@@ -302,7 +412,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     }
 
     //loop on 2 prongs
-    if(fEnable2Prongs)
+    if (fEnable2Prongs)
     {
         for (int i2Prong = 0; i2Prong < array2Prong->GetEntriesFast(); i2Prong++)
         {
@@ -313,9 +423,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //check if primary vtx is set
             bool unsetvtx = false;
-            if(!d->GetOwnPrimaryVtx())
+            if (!d->GetOwnPrimaryVtx())
             {
-                if(!d->GetOwnPrimaryVtx())
+                if (!d->GetOwnPrimaryVtx())
                 {
                     d->SetOwnPrimaryVtx(primVtx);
                     unsetvtx = true;
@@ -324,26 +434,27 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //if pp recompute primary vertex without daughters
             bool isvtxrecalc = false;
-            AliAODVertex* origownvtx = nullptr;
-            if(fSystem == kpp) {
+            AliAODVertex *origownvtx = nullptr;
+            if (fSystem == kpp)
+            {
                 origownvtx = new AliAODVertex(*d->GetOwnPrimaryVtx());
                 isvtxrecalc = RecalcOwnPrimaryVertex(d);
-                if(!isvtxrecalc)
+                if (!isvtxrecalc)
                     CleanOwnPrimaryVertex(d, origownvtx);
             }
 
             //fill vector of 2prongs
             FillCharm2Prong(d);
 
-            if(isvtxrecalc)
+            if (isvtxrecalc)
                 CleanOwnPrimaryVertex(d, origownvtx);
-            if(unsetvtx)
+            if (unsetvtx)
                 d->UnsetOwnPrimaryVtx();
         }
     }
 
     //loop on 3 prongs
-    if(fEnable3Prongs)
+    if (fEnable3Prongs)
     {
         for (int i3Prong = 0; i3Prong < array3Prong->GetEntriesFast(); i3Prong++)
         {
@@ -355,9 +466,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //check if primary vtx is set
             bool unsetvtx = false;
-            if(!d->GetOwnPrimaryVtx())
+            if (!d->GetOwnPrimaryVtx())
             {
-                if(!d->GetOwnPrimaryVtx())
+                if (!d->GetOwnPrimaryVtx())
                 {
                     d->SetOwnPrimaryVtx(primVtx);
                     unsetvtx = true;
@@ -366,26 +477,27 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //if pp recompute primary vertex without daughters
             bool isvtxrecalc = false;
-            AliAODVertex* origownvtx = nullptr;
-            if(fSystem == kpp) {
+            AliAODVertex *origownvtx = nullptr;
+            if (fSystem == kpp)
+            {
                 origownvtx = new AliAODVertex(*d->GetOwnPrimaryVtx());
                 isvtxrecalc = RecalcOwnPrimaryVertex(d);
-                if(!isvtxrecalc)
+                if (!isvtxrecalc)
                     CleanOwnPrimaryVertex(d, origownvtx);
             }
 
             //fill vector of 3prongs
             FillCharm3Prong(d);
 
-            if(isvtxrecalc)
+            if (isvtxrecalc)
                 CleanOwnPrimaryVertex(d, origownvtx);
-            if(unsetvtx)
+            if (unsetvtx)
                 d->UnsetOwnPrimaryVtx();
         }
     }
 
     //loop on Dstars
-    if(fEnableDstars)
+    if (fEnableDstars)
     {
         for (int iDstar = 0; iDstar < arrayDstar->GetEntriesFast(); iDstar++)
         {
@@ -400,9 +512,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //check if primary vtx is set
             bool unsetvtx = false;
-            if(!d->GetOwnPrimaryVtx())
+            if (!d->GetOwnPrimaryVtx())
             {
-                if(!d->GetOwnPrimaryVtx())
+                if (!d->GetOwnPrimaryVtx())
                 {
                     d->SetOwnPrimaryVtx(primVtx);
                     unsetvtx = true;
@@ -411,26 +523,27 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //if pp recompute primary vertex without daughters
             bool isvtxrecalc = false;
-            AliAODVertex* origownvtx = nullptr;
-            if(fSystem == kpp) {
+            AliAODVertex *origownvtx = nullptr;
+            if (fSystem == kpp)
+            {
                 origownvtx = new AliAODVertex(*d->GetOwnPrimaryVtx());
                 isvtxrecalc = RecalcOwnPrimaryVertex(d);
-                if(!isvtxrecalc)
+                if (!isvtxrecalc)
                     CleanOwnPrimaryVertex(d, origownvtx);
             }
 
             //fill vector of dstars
             FillDstar(d, d0);
 
-            if(isvtxrecalc)
+            if (isvtxrecalc)
                 CleanOwnPrimaryVertex(d, origownvtx);
-            if(unsetvtx)
+            if (unsetvtx)
                 d->UnsetOwnPrimaryVtx();
         }
     }
 
     //loop on cascades
-    if(fEnableCascades)
+    if (fEnableCascades)
     {
         for (int iCasc = 0; iCasc < arrayCasc->GetEntriesFast(); iCasc++)
         {
@@ -444,9 +557,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //check if primary vtx is set
             bool unsetvtx = false;
-            if(!lc->GetOwnPrimaryVtx())
+            if (!lc->GetOwnPrimaryVtx())
             {
-                if(!lc->GetOwnPrimaryVtx())
+                if (!lc->GetOwnPrimaryVtx())
                 {
                     lc->SetOwnPrimaryVtx(primVtx);
                     unsetvtx = true;
@@ -455,20 +568,21 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             //if pp recompute primary vertex without daughters
             bool isvtxrecalc = false;
-            AliAODVertex* origownvtx = nullptr;
-            if(fSystem == kpp) {
+            AliAODVertex *origownvtx = nullptr;
+            if (fSystem == kpp)
+            {
                 origownvtx = new AliAODVertex(*lc->GetOwnPrimaryVtx());
                 isvtxrecalc = RecalcOwnPrimaryVertex(lc);
-                if(!isvtxrecalc)
+                if (!isvtxrecalc)
                     CleanOwnPrimaryVertex(lc, origownvtx);
             }
 
             //fill vector of cascades
             FillCharmCascade(lc, v0part);
 
-            if(isvtxrecalc)
+            if (isvtxrecalc)
                 CleanOwnPrimaryVertex(lc, origownvtx);
-            if(unsetvtx)
+            if (unsetvtx)
                 lc->UnsetOwnPrimaryVtx();
         }
     }
@@ -490,7 +604,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong* cand)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong *cand)
 {
     Charm2Prong ch2Prong;
     ch2Prong.fPt = cand->Pt();
@@ -503,28 +617,36 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong
     ch2Prong.fDecayLengthXY = cand->DecayLengthXY();
     ch2Prong.fNormDecayLength = cand->NormalizedDecayLength();
     ch2Prong.fNormDecayLengthXY = cand->NormalizedDecayLengthXY();
-    ch2Prong.fImpParProd = cand->Getd0Prong(0)*cand->Getd0Prong(1);
+    ch2Prong.fImpParProd = cand->Getd0Prong(0) * cand->Getd0Prong(1);
+
+    ch2Prong.fSelBit = 0;
+    ch2Prong.fSelBit |= kDzerotoKpiCuts;
+    if (fCutsD0toKpi.IsSelectedPID(cand))
+        ch2Prong.fSelBit |= kDzerotoKpiCutsPID;
+    if (fCutsD0toKpi.IsInFiducialAcceptance(ch2Prong.fPt, ch2Prong.fY))
+        ch2Prong.fSelBit |= kDzerotoKpiFidAcc;
 
     int pdgDgD0toKpi[2] = {321, 211};
     ch2Prong.fGenLabel = cand->MatchToMC(421, fMCArray, 2, pdgDgD0toKpi);
     ch2Prong.fDecay = kNone;
     ch2Prong.fCandType = 0;
     int origin = -1;
-    if(ch2Prong.fGenLabel < 0){
+    if (ch2Prong.fGenLabel < 0)
+    {
         ch2Prong.fCandType |= kBackground;
-        if(fFillOnlySignal)
+        if (fFillOnlySignal)
             return;
     }
     else
     {
-        AliAODMCParticle* partD0 = dynamic_cast<AliAODMCParticle*>(fMCArray->At(ch2Prong.fGenLabel));
+        AliAODMCParticle *partD0 = dynamic_cast<AliAODMCParticle *>(fMCArray->At(ch2Prong.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
-        if(origin == 4)
+        if (origin == 4)
         {
             ch2Prong.fCandType |= kSignal;
             ch2Prong.fCandType |= kPrompt;
         }
-        else if(origin == 5)
+        else if (origin == 5)
         {
             ch2Prong.fCandType |= kSignal;
             ch2Prong.fCandType |= kFeedDown;
@@ -534,12 +656,12 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong
             ch2Prong.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
         }
 
-        int labDau0 = dynamic_cast<AliAODTrack*>(cand->GetDaughter(0))->GetLabel();
-        AliAODMCParticle* dauPart0 = dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
+        int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
+        AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
         int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
-        if(pdgCode0 == 321)
+        if (pdgCode0 == 321)
             ch2Prong.fDecay = kDzerotoKpi;
-        else if(pdgCode0 == 211)
+        else if (pdgCode0 == 211)
             ch2Prong.fDecay = kDzerotopiK;
         else
             ch2Prong.fDecay = kNone;
@@ -549,7 +671,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong* cand)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong *cand)
 {
     Charm3Prong ch3Prong;
     ch3Prong.fPt = cand->Pt();
@@ -571,12 +693,30 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
     ch3Prong.fNormDecayLengthXY = cand->NormalizedDecayLengthXY();
     ch3Prong.fSigmaVtx = cand->GetSigmaVert();
     ch3Prong.fSelBit = 0;
-    if(cand->HasSelectionBit(AliRDHFCuts::kDplusCuts))
+    if (cand->HasSelectionBit(AliRDHFCuts::kDplusCuts))
+    {
         ch3Prong.fSelBit |= kDplustoKpipiCuts;
-    if(cand->HasSelectionBit(AliRDHFCuts::kDsCuts))
+        if (fCutsDplustoKpipi.IsSelectedPID(cand))
+            ch3Prong.fSelBit |= kDplustoKpipiCutsPID;
+        if (fCutsDplustoKpipi.IsInFiducialAcceptance(ch3Prong.fPt, ch3Prong.fYDplus))
+            ch3Prong.fSelBit |= kDplustoKpipiFidAcc;
+    }
+    if (cand->HasSelectionBit(AliRDHFCuts::kDsCuts))
+    {
         ch3Prong.fSelBit |= kDstoKKpiCuts;
-    if(cand->HasSelectionBit(AliRDHFCuts::kLcCuts))
+        if (fCutsDstoKKpi.IsSelectedPID(cand))
+            ch3Prong.fSelBit |= kDstoKKpiCutsPID;
+        if (fCutsDstoKKpi.IsInFiducialAcceptance(ch3Prong.fPt, ch3Prong.fYDs))
+            ch3Prong.fSelBit |= kDstoKKpiFidAcc;
+    }
+    if (cand->HasSelectionBit(AliRDHFCuts::kLcCuts))
+    {
         ch3Prong.fSelBit |= kLctopKpiCuts;
+        if (fCutsLctopKpi.IsSelectedPID(cand))
+            ch3Prong.fSelBit |= kLctopKpiCutsPID;
+        if (fCutsLctopKpi.IsInFiducialAcceptance(ch3Prong.fPt, ch3Prong.fYLc))
+            ch3Prong.fSelBit |= kLctopKpiFidAcc;
+    }
 
     int pdgDgDplustoKpipi[3] = {321, 211, 211};
     int pdgDgDstoKKpi[3] = {321, 321, 211};
@@ -602,35 +742,36 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
                 {
                     ch3Prong.fGenLabel = labLc;
 
-                    int labDau0 = dynamic_cast<AliAODTrack*>(cand->GetDaughter(0))->GetLabel();
-                    AliAODMCParticle* dauPart0 = dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
+                    int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
+                    AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
                     int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
-                    if(pdgCode0 == 2122)
+                    if (pdgCode0 == 2122)
                         ch3Prong.fDecay = kLctopKpi;
-                    else if(pdgCode0 == 211)
+                    else if (pdgCode0 == 211)
                         ch3Prong.fDecay = kLctopiKp;
                 }
             }
-            else {
+            else
+            {
                 ch3Prong.fGenLabel = labDplustoKKpi;
-                int labDau0 = dynamic_cast<AliAODTrack*>(cand->GetDaughter(0))->GetLabel();
-                AliAODMCParticle* dauPart0 = dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
+                int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
+                AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
                 int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
-                if(pdgCode0 == 321)
+                if (pdgCode0 == 321)
                     ch3Prong.fDecay = kDplustoKKpi;
-                else if(pdgCode0 == 211)
+                else if (pdgCode0 == 211)
                     ch3Prong.fDecay = kDplustopiKK;
             }
         }
         else
         {
             ch3Prong.fGenLabel = labDs;
-            int labDau0 = dynamic_cast<AliAODTrack*>(cand->GetDaughter(0))->GetLabel();
-            AliAODMCParticle* dauPart0 = dynamic_cast<AliAODMCParticle*>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
+            int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
+            AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
             int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
-            if(pdgCode0 == 321)
+            if (pdgCode0 == 321)
                 ch3Prong.fDecay = kDstoKKpi;
-            else if(pdgCode0 == 211)
+            else if (pdgCode0 == 211)
                 ch3Prong.fDecay = kDstopiKK;
         }
     }
@@ -640,22 +781,22 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
         ch3Prong.fDecay = kDplustoKpipi;
     }
 
-    if(ch3Prong.fGenLabel < 0)
+    if (ch3Prong.fGenLabel < 0)
     {
         ch3Prong.fCandType |= kBackground;
-        if(fFillOnlySignal)
+        if (fFillOnlySignal)
             return;
     }
     else
     {
-        AliAODMCParticle* part3prong = dynamic_cast<AliAODMCParticle*>(fMCArray->At(ch3Prong.fGenLabel));
+        AliAODMCParticle *part3prong = dynamic_cast<AliAODMCParticle *>(fMCArray->At(ch3Prong.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part3prong, true);
-        if(origin == 4)
+        if (origin == 4)
         {
             ch3Prong.fCandType |= kSignal;
             ch3Prong.fCandType |= kPrompt;
         }
-        else if(origin == 5)
+        else if (origin == 5)
         {
             ch3Prong.fCandType |= kSignal;
             ch3Prong.fCandType |= kFeedDown;
@@ -670,13 +811,13 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau)
+void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF *cand, AliAODRecoDecayHF2Prong *dau)
 {
     Dstar dstar;
     dstar.fInvMass = cand->InvMassDstarKpipi();
     dstar.fInvMassD0 = cand->InvMassD0();
     dstar.fPt = cand->Pt();
-    dstar.fY = cand->Y(431);
+    dstar.fY = cand->Y(413);
     dstar.fCosPD0 = dau->CosPointingAngle();
     dstar.fCosPXYD0 = dau->CosPointingAngleXY();
     dstar.fDecayLengthD0 = dau->DecayLength();
@@ -684,28 +825,35 @@ void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, Al
     dstar.fNormDecayLengthD0 = dau->NormalizedDecayLength();
     dstar.fNormDecayLengthXYD0 = dau->NormalizedDecayLengthXY();
 
+    dstar.fSelBit = 0;
+    dstar.fSelBit |= kDstartoKpipiCuts;
+    if (fCutsDstartoKpipi.IsSelectedPID(cand))
+        dstar.fSelBit |= kDstartoKpipiCutsPID;
+    if (fCutsDstartoKpipi.IsInFiducialAcceptance(dstar.fPt, dstar.fY))
+        dstar.fSelBit |= kDstartoKpipiFidAcc;
+
     int pdgDgDstartoD0pi[3] = {421, 211};
     int pdgDgD0toKpi[2] = {321, 211};
-    dstar.fGenLabel = cand->MatchToMC(413, 421, pdgDgDstartoKpipi, pdgDgD0toKpi, fMCArray);
+    dstar.fGenLabel = cand->MatchToMC(413, 421, pdgDgDstartoD0pi, pdgDgD0toKpi, fMCArray);
     dstar.fDecay = kNone;
     dstar.fCandType = 0;
     int origin = -1;
-    if(dstar.fGenLabel < 0)
+    if (dstar.fGenLabel < 0)
     {
         dstar.fCandType |= kBackground;
-        if(fFillOnlySignal)
+        if (fFillOnlySignal)
             return;
     }
     else
     {
-        AliAODMCParticle* partDstar = dynamic_cast<AliAODMCParticle*>(fMCArray->At(dstar.fGenLabel));
+        AliAODMCParticle *partDstar = dynamic_cast<AliAODMCParticle *>(fMCArray->At(dstar.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partDstar, true);
-        if(origin == 4)
+        if (origin == 4)
         {
             dstar.fCandType |= kSignal;
             dstar.fCandType |= kPrompt;
         }
-        else if(origin == 5)
+        else if (origin == 5)
         {
             dstar.fCandType |= kSignal;
             dstar.fCandType |= kFeedDown;
@@ -721,7 +869,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF* cand, Al
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF *cand, AliAODv0 *dau)
 {
     CharmCascade chCasc;
 
@@ -737,8 +885,15 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* c
     chCasc.fCosPV0 = cand->CosV0PointingAngle();
     chCasc.fCosPXYV0 = cand->CosV0PointingAngleXY();
 
-    int pdgDgLctopK0s[2] = {2212,310};
-    int pdgDgLctopiLambda[2] = {3122, 211};
+    chCasc.fSelBit = 0;
+    chCasc.fSelBit |= kLctoV0bachCuts;
+    if (fCutsDstartoKpipi.IsSelectedPID(cand))
+        chCasc.fSelBit |= kLctoV0bachCutsPID;
+    if (fCutsDstartoKpipi.IsInFiducialAcceptance(chCasc.fPt, chCasc.fY))
+        chCasc.fSelBit |= kLctoV0bachFidAcc;
+
+    int pdgDgLctopK0s[2] = {2212, 310};
+    int pdgDgLctopiLambda[2] = {211, 3122};
     int pdgDgK0s[2] = {211, 211};
     int pdgDgLambda[2] = {2122, 211};
 
@@ -749,7 +904,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* c
     if (labtoK0s < 0)
     {
         labtoLambda = cand->MatchToMC(4122, 3122, pdgDgLctopiLambda, pdgDgLambda, fMCArray, true);
-        if(labtoLambda >= 0)
+        if (labtoLambda >= 0)
         {
             chCasc.fGenLabel = labtoLambda;
             chCasc.fDecay = kLctopK0s;
@@ -763,22 +918,22 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* c
 
     chCasc.fCandType = 0;
     int origin = -1;
-    if(chCasc.fGenLabel < 0)
+    if (chCasc.fGenLabel < 0)
     {
         chCasc.fCandType |= kBackground;
-        if(fFillOnlySignal)
+        if (fFillOnlySignal)
             return;
     }
     else
     {
-        AliAODMCParticle* partCasc = dynamic_cast<AliAODMCParticle*>(fMCArray->At(chCasc.fGenLabel));
+        AliAODMCParticle *partCasc = dynamic_cast<AliAODMCParticle *>(fMCArray->At(chCasc.fGenLabel));
         origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partCasc, true);
-        if(origin == 4)
+        if (origin == 4)
         {
             chCasc.fCandType |= kSignal;
             chCasc.fCandType |= kPrompt;
         }
-        else if(origin == 5)
+        else if (origin == 5)
         {
             chCasc.fCandType |= kSignal;
             chCasc.fCandType |= kFeedDown;
@@ -793,27 +948,33 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF* c
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::FillCharmGen(AliAODMCParticle* part, int origin, int decay)
+void AliAnalysisTaskSECharmTriggerStudy::FillCharmGen(AliAODMCParticle *part, int origin, int decay, bool dauInAcc)
 {
     GenCharmHadron genCharm;
     genCharm.fPt = part->Pt();
     genCharm.fY = part->Y();
     genCharm.fGenLabel = part->GetLabel();
-    if(origin == 4)
+    genCharm.fCandType = 0;
+    if (origin == 4)
         genCharm.fCandType |= kPrompt;
-    else if(origin == 5)
+    else if (origin == 5)
         genCharm.fCandType |= kFeedDown;
+    if (dauInAcc)
+        genCharm.fCandType |= kHasDauInAcc;
+    if (IsInFiducialAcceptance(genCharm.fPt, genCharm.fY))
+        genCharm.fCandType |= kIsInFidAcc;
     genCharm.fDecay = decay;
 
     fGenCharmHadron.push_back(genCharm);
 }
 
 //________________________________________________________________________
-bool AliAnalysisTaskSECharmTriggerStudy::RecalcOwnPrimaryVertex(AliAODRecoDecayHF* cand)
+bool AliAnalysisTaskSECharmTriggerStudy::RecalcOwnPrimaryVertex(AliAODRecoDecayHF *cand)
 {
     AliAODVertex *recvtx = cand->RemoveDaughtersFromPrimaryVtx(fAOD);
-    if(!recvtx){
-        AliDebug(2,"Removal of daughter tracks failed");
+    if (!recvtx)
+    {
+        AliDebug(2, "Removal of daughter tracks failed");
         return false;
     }
 
@@ -825,13 +986,53 @@ bool AliAnalysisTaskSECharmTriggerStudy::RecalcOwnPrimaryVertex(AliAODRecoDecayH
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::CleanOwnPrimaryVertex(AliAODRecoDecayHF* cand, AliAODVertex* origvtx)
+void AliAnalysisTaskSECharmTriggerStudy::CleanOwnPrimaryVertex(AliAODRecoDecayHF *cand, AliAODVertex *origvtx)
 {
     cand->UnsetOwnPrimaryVtx();
-    if(origvtx) {
-      cand->SetOwnPrimaryVtx(origvtx);
-      delete origvtx;
-      origvtx = NULL;
+    if (origvtx)
+    {
+        cand->SetOwnPrimaryVtx(origvtx);
+        delete origvtx;
+        origvtx = nullptr;
     }
     cand->RecalculateImpPars(cand->GetPrimaryVtx(), fAOD);
+}
+
+//________________________________________________________________________
+bool AliAnalysisTaskSECharmTriggerStudy::AreDauInAcc(int nProng, int *labDau)
+{
+    for (int iProng = 0; iProng < nProng; iProng++)
+    {
+        AliAODMCParticle *mcPartDaughter = dynamic_cast<AliAODMCParticle *>(fMCArray->At(labDau[iProng]));
+        if (!mcPartDaughter)
+        {
+            return false;
+        }
+        double eta = mcPartDaughter->Eta();
+        double pt = mcPartDaughter->Pt();
+        if (TMath::Abs(eta) > 0.9 || pt < 0.1)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+//________________________________________________________________________
+bool AliAnalysisTaskSECharmTriggerStudy::IsInFiducialAcceptance(double pt, double y)
+{
+    if (pt > 5.)
+    {
+        if (TMath::Abs(y) > 0.8)
+            return false;
+    }
+    else
+    {
+        double maxFiducialY = -0.2 / 15 * pt * pt + 1.9 / 15 * pt + 0.5;
+        double minFiducialY = 0.2 / 15 * pt * pt - 1.9 / 15 * pt - 0.5;
+        if (y < minFiducialY || y > maxFiducialY)
+            return false;
+    }
+
+    return true;
 }

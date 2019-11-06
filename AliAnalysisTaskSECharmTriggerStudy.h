@@ -23,6 +23,12 @@
 #include "AliAODRecoCascadeHF.h"
 #include "AliAODv0.h"
 #include "AliEventCuts.h"
+#include "AliRDHFCutsD0toKpi.h"
+#include "AliRDHFCutsDplustoKpipi.h"
+#include "AliRDHFCutsDStartoKpipi.h"
+#include "AliRDHFCutsDstoKKpi.h"
+#include "AliRDHFCutsLctopKpi.h"
+#include "AliRDHFCutsLctoV0.h"
 
 using std::vector;
 
@@ -42,6 +48,7 @@ struct Charm2Prong
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
+    int fSelBit;                        /// selection bit
 };
 
 struct Charm3Prong
@@ -67,7 +74,7 @@ struct Charm3Prong
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
-    unsigned char fSelBit;              /// selection bit
+    int fSelBit;                        /// selection bit
 };
 
 struct Dstar
@@ -85,6 +92,7 @@ struct Dstar
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
+    int fSelBit;                        /// selection bit
 };
 
 struct CharmCascade
@@ -100,6 +108,7 @@ struct CharmCascade
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
+    int fSelBit;                        /// selection bit
 };
 
 struct GenCharmHadron
@@ -116,10 +125,12 @@ class AliAnalysisTaskSECharmTriggerStudy : public AliAnalysisTaskSE
 public:
     enum kCandType
     {
-        kSignal     = BIT(0),
-        kBackground = BIT(1),
-        kPrompt     = BIT(2),
-        kFeedDown   = BIT(3)
+        kSignal      = BIT(0),
+        kBackground  = BIT(1),
+        kPrompt      = BIT(2),
+        kFeedDown    = BIT(3),
+        kHasDauInAcc = BIT(4),
+        kIsInFidAcc  = BIT(5)
     };
 
     enum kDecay
@@ -141,12 +152,24 @@ public:
 
     enum kSelBit
     {
-        kDzerotoKpiCuts = BIT(0),
-        kDplustoKpipiCuts = BIT(1),
-        kDstartoKpipiCuts = BIT(2),
-        kDstoKKpiCuts = BIT(3),
-        kLctopKpiCuts = BIT(4),
-        kLctoV0bachCuts = BIT(5)
+        kDzerotoKpiCuts      = BIT(0),
+        kDplustoKpipiCuts    = BIT(1),
+        kDstartoKpipiCuts    = BIT(2),
+        kDstoKKpiCuts        = BIT(3),
+        kLctopKpiCuts        = BIT(4),
+        kLctoV0bachCuts      = BIT(5),
+        kDzerotoKpiCutsPID   = BIT(6),
+        kDplustoKpipiCutsPID = BIT(7),
+        kDstartoKpipiCutsPID = BIT(8),
+        kDstoKKpiCutsPID     = BIT(9),
+        kLctopKpiCutsPID     = BIT(10),
+        kLctoV0bachCutsPID   = BIT(11),
+        kDzerotoKpiFidAcc    = BIT(12),
+        kDplustoKpipiFidAcc  = BIT(13),
+        kDstartoKpipiFidAcc  = BIT(14),
+        kDstoKKpiFidAcc      = BIT(15),
+        kLctopKpiFidAcc      = BIT(16),
+        kLctoV0bachFidAcc    = BIT(17)
     };
 
     enum kSystem
@@ -175,36 +198,45 @@ private:
     void FillCharm3Prong(AliAODRecoDecayHF3Prong* cand);
     void FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau);
     void FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau);
-    void FillCharmGen(AliAODMCParticle* part, int origin, int decay);
+    void FillCharmGen(AliAODMCParticle* part, int origin, int decay, bool aredauinacc);
     bool RecalcOwnPrimaryVertex(AliAODRecoDecayHF* cand);
     void CleanOwnPrimaryVertex(AliAODRecoDecayHF* cand, AliAODVertex* origvtx);
+    bool AreDauInAcc(int nProng, int *labDau);
+    bool IsInFiducialAcceptance(double pt, double y);
 
-    TList *fOutput;                         //!<! List of output histograms
-    TH1F* fHistNEvents;                     //!<! Histogram for event info
-    TTree *fRecoTree;                       //!<! Output tree with reco candidates
-    TTree *fGenTree;                        //!<! Output tree with generated particles
+    TList *fOutput;                             //!<! List of output histograms
+    TH1F* fHistNEvents;                         //!<! Histogram for event info
+    TTree *fRecoTree;                           //!<! Output tree with reco candidates
+    TTree *fGenTree;                            //!<! Output tree with generated particles
 
-    AliEventCuts fEventCuts;                /// object for event selection
-    int fSystem;                            /// system (pp or PbPb)
-    AliAODEvent *fAOD;                      //!<! AOD event
-    int fAODProtection;                     /// protection for delta AOD mismatch
-    TClonesArray* fMCArray;                 //!<! MC array
-    float fRecoZvtx;                        /// Z of the reconstructed primary vertex
-    float fGenZvtx;                         /// Z of the generated primary vertex
+    AliEventCuts fEventCuts;                    /// object for event selection
+    int fSystem;                                /// system (pp or PbPb)
+    AliAODEvent *fAOD;                          //!<! AOD event
+    int fAODProtection;                         /// protection for delta AOD mismatch
+    TClonesArray* fMCArray;                     //!<! MC array
+    float fRecoZvtx;                            /// Z of the reconstructed primary vertex
+    float fGenZvtx;                             /// Z of the generated primary vertex
 
-    vector<Charm2Prong> fCharm2Prong;       /// vector of 2 prongs
-    vector<Charm3Prong> fCharm3Prong;       /// vector of 3 prongs
-    vector<Dstar> fDstar;                   /// vector of Dstar
-    vector<CharmCascade> fCharmCascade;     /// vector of cascades
-    vector<GenCharmHadron> fGenCharmHadron; /// vector of generated charm hadrons
+    vector<Charm2Prong> fCharm2Prong;           /// vector of 2 prongs
+    vector<Charm3Prong> fCharm3Prong;           /// vector of 3 prongs
+    vector<Dstar> fDstar;                       /// vector of Dstar
+    vector<CharmCascade> fCharmCascade;         /// vector of cascades
+    vector<GenCharmHadron> fGenCharmHadron;     /// vector of generated charm hadrons
 
-    bool fEnable2Prongs;                    /// flag to enable 2-prong branch
-    bool fEnable3Prongs;                    /// flag to enable 3-prong branch
-    bool fEnableDstars;                     /// flag to enable Dstar branch
-    bool fEnableCascades;                   /// flag to enable cascade branch
-    bool fFillOnlySignal;                   /// flag to fill only signal
+    bool fEnable2Prongs;                        /// flag to enable 2-prong branch
+    bool fEnable3Prongs;                        /// flag to enable 3-prong branch
+    bool fEnableDstars;                         /// flag to enable Dstar branch
+    bool fEnableCascades;                       /// flag to enable cascade branch
+    bool fFillOnlySignal;                       /// flag to fill only signal
 
-    ClassDef(AliAnalysisTaskSECharmTriggerStudy, 2);
+    AliRDHFCutsD0toKpi fCutsD0toKpi;            /// cut object for D0->Kpi
+    AliRDHFCutsDplustoKpipi fCutsDplustoKpipi;  /// cut object for D+->Kpipi
+    AliRDHFCutsDStartoKpipi fCutsDstartoKpipi;  /// cut object for D*+->D0pi->Kpipi
+    AliRDHFCutsDstoKKpi fCutsDstoKKpi;          /// cut object for Ds+->phipi->KKpi
+    AliRDHFCutsLctopKpi fCutsLctopKpi;          /// cut object for Lc->pKpi
+    AliRDHFCutsLctoV0 fCutsLctoV0bach;          /// cut object for Lc->V0bachelor
+
+    ClassDef(AliAnalysisTaskSECharmTriggerStudy, 1);
 };
 
 #endif
