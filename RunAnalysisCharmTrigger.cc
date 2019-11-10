@@ -75,6 +75,8 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
 
     string resolCurrent = config["improverfiles"]["currentresol"].as<string>();
     string resolUpgr = config["improverfiles"]["upgraderesol"].as<string>();
+    bool applyCuts = static_cast<bool>(config["cuts"]["applycuts"].as<int>());
+    string cutFileName = config["cuts"]["cutfile"].as<string>();
 
     // since we will compile a class, tell root where to look for headers
     gInterpreter->ProcessLine(".include $ROOTSYS/include");
@@ -85,7 +87,10 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
     AliAODInputHandler *aodH = new AliAODInputHandler();
     mgr->SetInputEventHandler(aodH);
 
-    AliPhysicsSelectionTask *physseltask = reinterpret_cast<AliPhysicsSelectionTask *>(gInterpreter->ProcessLine(Form(".x %s (%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"),isRunOnMC)));
+    AliPhysicsSelectionTask *physseltask = nullptr;
+    if(runMode!="terminate")
+        physseltask = reinterpret_cast<AliPhysicsSelectionTask *>(gInterpreter->ProcessLine(Form(".x %s (%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"),isRunOnMC)));
+
     AliAnalysisTaskPIDResponse *pidResp = reinterpret_cast<AliAnalysisTaskPIDResponse *>(gInterpreter->ProcessLine(Form(".x %s (%d)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"),isRunOnMC)));
 
     if(resolCurrent!="" && resolUpgr!="")
@@ -94,7 +99,7 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
     }
 
     gInterpreter->ProcessLine(".L AliAnalysisTaskSECharmTriggerStudy.cxx+g");
-    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, true, true, false, "SignalAndBackground")));
+    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,%d,%d,%d,\"%s\",%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, true, true, false, false, false, cutFileName.data(), applyCuts, "SignalAndBackground")));
 
     if(System==AliAnalysisTaskSECharmTriggerStudy::kPbPb) {
         AliAnalysisTaskSECleanupVertexingHF *taskclean =reinterpret_cast<AliAnalysisTaskSECleanupVertexingHF *>(gInterpreter->ProcessLine(Form(".x %s", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskCleanupVertexingHF.C"))));

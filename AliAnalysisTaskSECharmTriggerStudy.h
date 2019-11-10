@@ -44,7 +44,7 @@ struct Charm2Prong
     Double32_t fDecayLengthXY;          //[0.0,6.5536,16]
     Double32_t fNormDecayLength;        //[0.0,102.4.,10]
     Double32_t fNormDecayLengthXY;      //[0.0,102.4,10]
-    Double32_t fImpParProd;             //[-3.2768,3.2768,16]
+    Double32_t fImpParProd;             //[-0.32768,0.32768,16]
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
@@ -153,23 +153,29 @@ public:
     enum kSelBit
     {
         kDzerotoKpiCuts      = BIT(0),
-        kDplustoKpipiCuts    = BIT(1),
-        kDstartoKpipiCuts    = BIT(2),
-        kDstoKKpiCuts        = BIT(3),
-        kLctopKpiCuts        = BIT(4),
-        kLctoV0bachCuts      = BIT(5),
-        kDzerotoKpiCutsPID   = BIT(6),
-        kDplustoKpipiCutsPID = BIT(7),
-        kDstartoKpipiCutsPID = BIT(8),
-        kDstoKKpiCutsPID     = BIT(9),
-        kLctopKpiCutsPID     = BIT(10),
-        kLctoV0bachCutsPID   = BIT(11),
-        kDzerotoKpiFidAcc    = BIT(12),
-        kDplustoKpipiFidAcc  = BIT(13),
-        kDstartoKpipiFidAcc  = BIT(14),
-        kDstoKKpiFidAcc      = BIT(15),
-        kLctopKpiFidAcc      = BIT(16),
-        kLctoV0bachFidAcc    = BIT(17)
+        kDzerotopiKCuts      = BIT(1),
+        kDplustoKpipiCuts    = BIT(2),
+        kDstartoKpipiCuts    = BIT(3),
+        kDstoKKpiCuts        = BIT(4),
+        kDstopiKKCuts        = BIT(5),
+        kLctopKpiCuts        = BIT(6),
+        kLctopiKpCuts        = BIT(7),
+        kLctoV0bachCuts      = BIT(8),
+        kDzerotoKpiCutsPID   = BIT(9),
+        kDzerotopiKCutsPID   = BIT(10),
+        kDplustoKpipiCutsPID = BIT(11),
+        kDstartoKpipiCutsPID = BIT(12),
+        kDstoKKpiCutsPID     = BIT(13),
+        kDstopiKKCutsPID     = BIT(14),
+        kLctopKpiCutsPID     = BIT(15),
+        kLctopiKpCutsPID     = BIT(16),
+        kLctoV0bachCutsPID   = BIT(17),
+        kDzerotoKpiFidAcc    = BIT(18),
+        kDplustoKpipiFidAcc  = BIT(19),
+        kDstartoKpipiFidAcc  = BIT(20),
+        kDstoKKpiFidAcc      = BIT(21),
+        kLctopKpiFidAcc      = BIT(22),
+        kLctoV0bachFidAcc    = BIT(23)
     };
 
     enum kSystem
@@ -178,26 +184,32 @@ public:
         kPbPb
     };
 
-    AliAnalysisTaskSECharmTriggerStudy(const char *name = "CharmTriggerStudy");
+    AliAnalysisTaskSECharmTriggerStudy();
+    AliAnalysisTaskSECharmTriggerStudy(const char *name, TList *cutlist);
     virtual ~AliAnalysisTaskSECharmTriggerStudy();
 
+    virtual void Init();
+    virtual void LocalInit() {Init();}
     virtual void UserCreateOutputObjects();
     virtual void UserExec(Option_t *option);
 
-    void Enable2Prongs(bool enable = true)             {fEnable2Prongs = enable;}
-    void Enable3Prongs(bool enable = true)             {fEnable3Prongs = enable;}
-    void EnableDstars(bool enable = true)              {fEnableDstars = enable;}
-    void EnableCascades(bool enable = true)            {fEnableCascades = enable;}
-    void SetFillOnlySignal(bool fillonlysignal = true) {fFillOnlySignal = fillonlysignal;}
+    void Enable2Prongs(bool enable = true)               {fEnable2Prongs = enable;}
+    void Enable3Prongs(bool enableDplus = true,
+                       bool enableDs = true,
+                       bool enableLc = true)             {fEnable3Prongs = 0; if(enableDplus) fEnable3Prongs |= BIT(1); if(enableDs) fEnable3Prongs |= BIT(2); if(enableLc) fEnable3Prongs |= BIT(3);}
+    void EnableDstars(bool enable = true)                {fEnableDstars = enable;}
+    void EnableCascades(bool enable = true)              {fEnableCascades = enable;}
+    void SetFillOnlySignal(bool fillonlysignal = true)   {fFillOnlySignal = fillonlysignal;}
 
-    void SetSystem(int system = kpp) {fSystem = system;}
+    void SetSystem(int system = kpp)                     {fSystem = system;}
+    void ApplyCuts(bool applycuts = true)                {fApplyCuts = applycuts;}
 
 private:
 
-    void FillCharm2Prong(AliAODRecoDecayHF2Prong* cand);
-    void FillCharm3Prong(AliAODRecoDecayHF3Prong* cand);
-    void FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau);
-    void FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau);
+    void FillCharm2Prong(AliAODRecoDecayHF2Prong* cand, int issel);
+    void FillCharm3Prong(AliAODRecoDecayHF3Prong* cand, bool isselDplus, int isselDs, int isselLc);
+    void FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau, bool issel);
+    void FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau, int issel);
     void FillCharmGen(AliAODMCParticle* part, int origin, int decay, bool aredauinacc);
     bool RecalcOwnPrimaryVertex(AliAODRecoDecayHF* cand);
     void CleanOwnPrimaryVertex(AliAODRecoDecayHF* cand, AliAODVertex* origvtx);
@@ -224,17 +236,20 @@ private:
     vector<GenCharmHadron> fGenCharmHadron;     /// vector of generated charm hadrons
 
     bool fEnable2Prongs;                        /// flag to enable 2-prong branch
-    bool fEnable3Prongs;                        /// flag to enable 3-prong branch
+    int fEnable3Prongs;                         /// flag to enable 3-prong branch (with D+ and/or Ds+ and/or Lc)
     bool fEnableDstars;                         /// flag to enable Dstar branch
     bool fEnableCascades;                       /// flag to enable cascade branch
     bool fFillOnlySignal;                       /// flag to fill only signal
 
-    AliRDHFCutsD0toKpi fCutsD0toKpi;            /// cut object for D0->Kpi
-    AliRDHFCutsDplustoKpipi fCutsDplustoKpipi;  /// cut object for D+->Kpipi
-    AliRDHFCutsDStartoKpipi fCutsDstartoKpipi;  /// cut object for D*+->D0pi->Kpipi
-    AliRDHFCutsDstoKKpi fCutsDstoKKpi;          /// cut object for Ds+->phipi->KKpi
-    AliRDHFCutsLctopKpi fCutsLctopKpi;          /// cut object for Lc->pKpi
-    AliRDHFCutsLctoV0 fCutsLctoV0bach;          /// cut object for Lc->V0bachelor
+    AliRDHFCutsD0toKpi* fCutsD0toKpi;           /// cut object for D0->Kpi
+    AliRDHFCutsDplustoKpipi* fCutsDplustoKpipi; /// cut object for D+->Kpipi
+    AliRDHFCutsDStartoKpipi* fCutsDstartoKpipi; /// cut object for D*+->D0pi->Kpipi
+    AliRDHFCutsDstoKKpi* fCutsDstoKKpi;         /// cut object for Ds+->phipi->KKpi
+    AliRDHFCutsLctopKpi* fCutsLctopKpi;         /// cut object for Lc->pKpi
+    AliRDHFCutsLctoV0* fCutsLctoV0bach;         /// cut object for Lc->V0bachelor
+
+    bool fApplyCuts;                            /// flag to enable cuts application
+    TList* fListCuts;                           /// list of cut objects
 
     ClassDef(AliAnalysisTaskSECharmTriggerStudy, 1);
 };

@@ -1,9 +1,13 @@
 AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAnalysisTaskSECharmTriggerStudy::kpp,
                                                              bool enable2prongs = true,
-                                                             bool enable3prongs = true,
-                                                             bool enableDstars = false,
+                                                             bool enable3prongsDplus = true,
+                                                             bool enable3prongsDs = true,
+                                                             bool enable3prongsLc = true,
+                                                             bool enableDstars = true,
                                                              bool enableCascades = false,
                                                              bool fillOnlySignal = false,
+                                                             TString cutfilename = "",
+                                                             bool applyCuts = false,
                                                              TString suffix = "")
 {
     //
@@ -29,14 +33,52 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
         return NULL;
     }
 
+    //cuts files
+    AliRDHFCutsD0toKpi* cutsD0 = nullptr;
+    AliRDHFCutsDplustoKpipi* cutsDplus = nullptr;
+    AliRDHFCutsDStartoKpipi* cutsDstar = nullptr;
+    AliRDHFCutsDstoKKpi* cutsDs = nullptr;
+    AliRDHFCutsLctopKpi* cutsLc = nullptr;
+    AliRDHFCutsLctoV0* cutsLctoV0 = nullptr;
+    if(cutfilename != "")
+    {
+        TFile* infilecuts = TFile::Open(cutfilename);
+        if(infilecuts)
+        {
+            cutsD0     = (AliRDHFCutsD0toKpi*)infilecuts->Get("D0toKpiCuts");
+            cutsDplus  = (AliRDHFCutsDplustoKpipi*)infilecuts->Get("DplustoKpipiCuts");
+            cutsDstar  = (AliRDHFCutsDStartoKpipi*)infilecuts->Get("DstoKKpiCuts");
+            cutsDs     = (AliRDHFCutsDstoKKpi*)infilecuts->Get("LctopKpiCuts");
+            cutsLc     = (AliRDHFCutsLctopKpi*)infilecuts->Get("DstartoKpipiCuts");
+            cutsLctoV0 = (AliRDHFCutsLctoV0*)infilecuts->Get("LctoV0bachCuts");
+        }
+    }
+
+    TList* listofcuts = new TList();
+    listofcuts->SetName("fListCuts");
+    listofcuts->SetOwner(true);
+    if(cutsD0)
+        listofcuts->Add(cutsD0);
+    if(cutsDplus)
+        listofcuts->Add(cutsDplus);
+    if(cutsDstar)
+        listofcuts->Add(cutsDstar);
+    if(cutsDs)
+        listofcuts->Add(cutsDs);
+    if(cutsLc)
+        listofcuts->Add(cutsLc);
+    if(cutsLctoV0)
+        listofcuts->Add(cutsLctoV0);
+
     // Analysis task
-    AliAnalysisTaskSECharmTriggerStudy *chTask = new AliAnalysisTaskSECharmTriggerStudy("CharmTriggerStudyTask");
+    AliAnalysisTaskSECharmTriggerStudy *chTask = new AliAnalysisTaskSECharmTriggerStudy("CharmTriggerStudyTask", listofcuts);
     chTask->Enable2Prongs(enable2prongs);
-    chTask->Enable3Prongs(enable3prongs);
+    chTask->Enable3Prongs(enable3prongsDplus, enable3prongsDs, enable3prongsLc);
     chTask->EnableDstars(enableDstars);
     chTask->EnableCascades(enableCascades);
     chTask->SetFillOnlySignal(fillOnlySignal);
     chTask->SetSystem(system);
+    chTask->ApplyCuts(applyCuts);
     mgr->AddTask(chTask);
 
     // Create containers for input/output
@@ -55,10 +97,14 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
     contname = Form("coutputChTriggerGenTree%s", suffix.Data());
     AliAnalysisDataContainer *coutputgentree = mgr->CreateContainer(contname.Data(), TTree::Class(), AliAnalysisManager::kOutputContainer, outputdirname.Data());
 
+    contname = Form("coutputChTriggerCuts%s", suffix.Data());
+    AliAnalysisDataContainer *coutputcuts    = mgr->CreateContainer(contname.Data(), TList::Class(), AliAnalysisManager::kOutputContainer, outputdirname.Data());
+
     mgr->ConnectInput(chTask, 0, mgr->GetCommonInputContainer());
     mgr->ConnectOutput(chTask, 1, coutputlist);
     mgr->ConnectOutput(chTask, 2, coutputrecotree);
     mgr->ConnectOutput(chTask, 3, coutputgentree);
+    mgr->ConnectOutput(chTask, 4, coutputcuts);
 
     return chTask;
 }

@@ -1,9 +1,9 @@
 runtype: grid #local, test, grid
 pathtolocalAOD: '.'
 system: pp
-datadir: /alice/sim/2018/LHC18l4b_cent/
-datapattern: AOD
-gridworkdir: CharmTriggerSignal
+datadir: /alice/sim/2018/LHC18h1_cent/
+datapattern: AOD213
+gridworkdir: CharmTriggerSignalAndBackground
 splitmaxinputfilenum: 20
 AliPhysicVersion: vAN-20191108_ROOT6-1
 runs: [285958, 285957, 285946, 285917, 285893, 285892, 285869, 285851, 285830, 285812, 285811, 285810,
