@@ -20,6 +20,7 @@
 #include <TString.h>
 #include <TH1F.h>
 #include <TDatabasePDG.h>
+#include <TObjArray.h>
 
 #include "AliAnalysisTaskSECharmTriggerStudy.h"
 #include "AliAnalysisManager.h"
@@ -32,80 +33,82 @@
 #include "AliVertexingHFUtils.h"
 #include "AliRDHFCuts.h"
 #include "AliLog.h"
+#include "AliVertexerTracks.h"
+#include "AliESDVertex.h"
 
 /// \cond CLASSIMP
 ClassImp(AliAnalysisTaskSECharmTriggerStudy);
 /// \endcond
 
 //________________________________________________________________________
-AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy() :
-AliAnalysisTaskSECharmTriggerStudy("", nullptr)
+AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy() : AliAnalysisTaskSECharmTriggerStudy("", nullptr)
 {
     /// Default constructor
 }
 
 //________________________________________________________________________
 AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const char *name, TList *cutlist) : AliAnalysisTaskSE(name),
-    fOutput(nullptr),
-    fHistNEvents(nullptr),
-    fRecoTree(nullptr),
-    fGenTree(nullptr),
-    fEventCuts{},
-    fSystem(kpp),
-    fAOD(nullptr),
-    fAODProtection(1),
-    fMCArray(nullptr),
-    fRecoZvtx(-999.),
-    fGenZvtx(-999.),
-    fCharm2Prong{},
-    fCharm3Prong{},
-    fDstar{},
-    fCharmCascade{},
-    fGenCharmHadron{},
-    fEnable2Prongs(true),
-    fEnable3Prongs(0),
-    fEnableDstars(false),
-    fEnableCascades(false),
-    fFillOnlySignal(false),
-    fCutsD0toKpi(nullptr),
-    fCutsDplustoKpipi(nullptr),
-    fCutsDstartoKpipi(nullptr),
-    fCutsDstoKKpi(nullptr),
-    fCutsLctopKpi(nullptr),
-    fCutsLctoV0bach(nullptr),
-    fApplyCuts(false),
-    fListCuts(cutlist)
+                                                                                                           fOutput(nullptr),
+                                                                                                           fHistNEvents(nullptr),
+                                                                                                           fRecoTree(nullptr),
+                                                                                                           fGenTree(nullptr),
+                                                                                                           fEventCuts{},
+                                                                                                           fSystem(kpp),
+                                                                                                           fAOD(nullptr),
+                                                                                                           fAODProtection(1),
+                                                                                                           fMCArray(nullptr),
+                                                                                                           fRecoZvtx(-999.),
+                                                                                                           fGenZvtx(-999.),
+                                                                                                           fCharm2Prong{},
+                                                                                                           fCharm3Prong{},
+                                                                                                           fDstar{},
+                                                                                                           fCharmCascade{},
+                                                                                                           fGenCharmHadron{},
+                                                                                                           fEnable2Prongs(true),
+                                                                                                           fEnable3Prongs(0),
+                                                                                                           fEnableDstars(false),
+                                                                                                           fEnableCascades(false),
+                                                                                                           fEnableBplus(false),
+                                                                                                           fFillOnlySignal(false),
+                                                                                                           fCutsD0toKpi(nullptr),
+                                                                                                           fCutsDplustoKpipi(nullptr),
+                                                                                                           fCutsDstartoKpipi(nullptr),
+                                                                                                           fCutsDstoKKpi(nullptr),
+                                                                                                           fCutsLctopKpi(nullptr),
+                                                                                                           fCutsLctoV0bach(nullptr),
+                                                                                                           fApplyCuts(false),
+                                                                                                           fListCuts(cutlist)
 {
     /// Default constructor
-    AliRDHFCutsD0toKpi* cutsD0 = nullptr;
-    AliRDHFCutsDplustoKpipi* cutsDplus = nullptr;
-    AliRDHFCutsDstoKKpi* cutsDs = nullptr;
-    AliRDHFCutsLctopKpi* cutsLc = nullptr;
-    AliRDHFCutsDStartoKpipi* cutsDstar = nullptr;
-    AliRDHFCutsLctoV0* cutsLctoV0 = nullptr;
+    AliRDHFCutsD0toKpi *cutsD0 = nullptr;
+    AliRDHFCutsDplustoKpipi *cutsDplus = nullptr;
+    AliRDHFCutsDstoKKpi *cutsDs = nullptr;
+    AliRDHFCutsLctopKpi *cutsLc = nullptr;
+    AliRDHFCutsDStartoKpipi *cutsDstar = nullptr;
+    AliRDHFCutsLctoV0 *cutsLctoV0 = nullptr;
 
-    if(fListCuts)
+    if (fListCuts)
     {
-        cutsD0 = static_cast<AliRDHFCutsD0toKpi*>(fListCuts->FindObject("D0toKpiCuts"));
-        cutsDplus = static_cast<AliRDHFCutsDplustoKpipi*>(fListCuts->FindObject("DplustoKpipiCuts"));
-        cutsDs = static_cast<AliRDHFCutsDstoKKpi*>(fListCuts->FindObject("DstoKKpiCuts"));
-        cutsLc = static_cast<AliRDHFCutsLctopKpi*>(fListCuts->FindObject("LctopKpiCuts"));
-        cutsDstar = static_cast<AliRDHFCutsDStartoKpipi*>(fListCuts->FindObject("DstartoKpipiCuts"));
-        cutsLctoV0 = static_cast<AliRDHFCutsLctoV0*>(fListCuts->FindObject("LctoV0bachCuts"));
+        cutsD0 = static_cast<AliRDHFCutsD0toKpi *>(fListCuts->FindObject("D0toKpiCuts"));
+        cutsDplus = static_cast<AliRDHFCutsDplustoKpipi *>(fListCuts->FindObject("DplustoKpipiCuts"));
+        cutsDs = static_cast<AliRDHFCutsDstoKKpi *>(fListCuts->FindObject("DstoKKpiCuts"));
+        cutsLc = static_cast<AliRDHFCutsLctopKpi *>(fListCuts->FindObject("LctopKpiCuts"));
+        cutsDstar = static_cast<AliRDHFCutsDStartoKpipi *>(fListCuts->FindObject("DstartoKpipiCuts"));
+        cutsLctoV0 = static_cast<AliRDHFCutsLctoV0 *>(fListCuts->FindObject("LctoV0bachCuts"));
     }
 
-    if(cutsD0)
-        fCutsD0toKpi = static_cast<AliRDHFCutsD0toKpi*>(cutsD0->Clone("fCutsD0toKpi"));
-    if(cutsDplus)
-        fCutsDplustoKpipi = static_cast<AliRDHFCutsDplustoKpipi*>(cutsDplus->Clone("fCutsDplustoKpipi"));
-    if(cutsDs)
-        fCutsDstoKKpi = static_cast<AliRDHFCutsDstoKKpi*>(cutsDs->Clone("fCutsDstoKKpi"));
-    if(cutsLc)
-        fCutsLctopKpi = static_cast<AliRDHFCutsLctopKpi*>(cutsLc->Clone("fCutsLctopKpi"));
-    if(cutsDstar)
-        fCutsDstartoKpipi = static_cast<AliRDHFCutsDStartoKpipi*>(cutsDstar->Clone("fCutsDstartoKpipi"));
-    if(cutsLctoV0)
-        fCutsLctoV0bach = static_cast<AliRDHFCutsLctoV0*>(cutsLctoV0->Clone("fCutsLctoV0bach"));
+    if (cutsD0)
+        fCutsD0toKpi = static_cast<AliRDHFCutsD0toKpi *>(cutsD0->Clone("fCutsD0toKpi"));
+    if (cutsDplus)
+        fCutsDplustoKpipi = static_cast<AliRDHFCutsDplustoKpipi *>(cutsDplus->Clone("fCutsDplustoKpipi"));
+    if (cutsDs)
+        fCutsDstoKKpi = static_cast<AliRDHFCutsDstoKKpi *>(cutsDs->Clone("fCutsDstoKKpi"));
+    if (cutsLc)
+        fCutsLctopKpi = static_cast<AliRDHFCutsLctopKpi *>(cutsLc->Clone("fCutsLctopKpi"));
+    if (cutsDstar)
+        fCutsDstartoKpipi = static_cast<AliRDHFCutsDStartoKpipi *>(cutsDstar->Clone("fCutsDstartoKpipi"));
+    if (cutsLctoV0)
+        fCutsLctoV0bach = static_cast<AliRDHFCutsLctoV0 *>(cutsLctoV0->Clone("fCutsLctoV0bach"));
 
     DefineOutput(1, TList::Class());
     DefineOutput(2, TTree::Class());
@@ -124,30 +127,30 @@ AliAnalysisTaskSECharmTriggerStudy::~AliAnalysisTaskSECharmTriggerStudy()
     if (fGenTree)
         delete fGenTree;
 
-    if(fCutsD0toKpi)
+    if (fCutsD0toKpi)
         delete fCutsD0toKpi;
-    if(fCutsDplustoKpipi)
+    if (fCutsDplustoKpipi)
         delete fCutsDplustoKpipi;
-    if(fCutsDstoKKpi)
+    if (fCutsDstoKKpi)
         delete fCutsDstoKKpi;
-    if(fCutsDstartoKpipi)
+    if (fCutsDstartoKpipi)
         delete fCutsDstartoKpipi;
-    if(fCutsLctopKpi)
+    if (fCutsLctopKpi)
         delete fCutsLctopKpi;
-    if(fCutsLctoV0bach)
+    if (fCutsLctoV0bach)
         delete fCutsLctoV0bach;
-    if(fListCuts)
+    if (fListCuts)
         delete fListCuts;
 }
 
 //________________________________________________________________________
 void AliAnalysisTaskSECharmTriggerStudy::Init()
 {
-  /// Initialization
+    /// Initialization
 
-  PostData(4, fListCuts);
+    PostData(4, fListCuts);
 
-  return;
+    return;
 }
 
 //________________________________________________________________________
@@ -196,9 +199,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
 
     //cut objects
     float ptbins[2] = {0., 100.};
-    if (fEnable2Prongs)
+    if (fEnable2Prongs || fEnableBplus)
     {
-        if(!fCutsD0toKpi)
+        if (!fCutsD0toKpi)
         { //cut object for PID
             fCutsD0toKpi = new AliRDHFCutsD0toKpi("fCutsD0toKpi");
             fCutsD0toKpi->SetPtBins(2, ptbins);
@@ -223,21 +226,21 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
     }
     if (fEnable3Prongs)
     {
-        if(!fCutsDplustoKpipi)
+        if (!fCutsDplustoKpipi)
         { //cut object for PID
             fCutsDplustoKpipi = new AliRDHFCutsDplustoKpipi("fCutsDplustoKpipi");
             fCutsDplustoKpipi->SetPtBins(2, ptbins);
             fCutsDplustoKpipi->SetUsePID(true);
         }
 
-        if(!fCutsDstoKKpi)
+        if (!fCutsDstoKKpi)
         { //cut object for PID
             fCutsDstoKKpi = new AliRDHFCutsDstoKKpi("fCutsDstoKKpi");
             fCutsDstoKKpi->SetPtBins(2, ptbins);
             fCutsDstoKKpi->SetUsePID(true);
         }
 
-        if(!fCutsLctopKpi)
+        if (!fCutsLctopKpi)
         { //cut object for PID
             fCutsLctopKpi = new AliRDHFCutsLctopKpi("fCutsLctopKpi");
             fCutsLctopKpi->SetPtBins(2, ptbins);
@@ -267,7 +270,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
     }
     if (fEnableDstars)
     {
-        if(!fCutsDstartoKpipi)
+        if (!fCutsDstartoKpipi)
         { //cut object for PID
             fCutsDstartoKpipi = new AliRDHFCutsDStartoKpipi("fCutsDstartoKpipi");
             fCutsDstartoKpipi->SetPtBins(2, ptbins);
@@ -283,7 +286,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
     }
     if (fEnableCascades)
     {
-        if(!fCutsLctoV0bach)
+        if (!fCutsLctoV0bach)
         { //cut object for PID
             fCutsLctoV0bach = new AliRDHFCutsLctoV0("LctoV0bachCuts");
             fCutsLctoV0bach->SetPtBins(2, ptbins);
@@ -406,9 +409,11 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             continue;
 
         int pdgCode = TMath::Abs(part->GetPdgCode());
-        if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122)
+        if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122 || pdgCode == 521)
         {
-            int origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part, true);
+            int origin = 4; //beauty assumed to be always prompt
+            if (pdgCode != 521)
+                origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part, true);
             if (origin != 4 && origin != 5)
                 continue; //keep only prompt or feed-down
 
@@ -429,7 +434,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                 else
                     FillCharmGen(part, origin, kDzerotopiK, dauInAcc);
             }
-            else if (pdgCode == 411 && fEnable3Prongs>>0&1) //Dplus
+            else if (pdgCode == 411 && fEnable3Prongs >> 0 & 1) //Dplus
             {
                 decay = AliVertexingHFUtils::CheckDplusDecay(fMCArray, part, labDau);
                 if (decay >= 1 && labDau[0] >= 0 && labDau[1] >= 0)
@@ -448,7 +453,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                 else
                     FillCharmGen(part, origin, kDplustopiKK, dauInAcc);
             }
-            else if (pdgCode == 431 && fEnable3Prongs>>1&1) //Ds
+            else if (pdgCode == 431 && fEnable3Prongs >> 1 & 1) //Ds
             {
                 decay = AliVertexingHFUtils::CheckDsDecay(fMCArray, part, labDau);
                 if (decay != 1 || labDau[0] < 0 || labDau[1] < 0) //keep only Ds -> phipi --> KKpi (to be discussed)
@@ -470,7 +475,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             }
             else if (pdgCode == 4122) //Lc
             {
-                if (fEnable3Prongs>>2&1)
+                if (fEnable3Prongs >> 2 & 1)
                 {
                     decay = AliVertexingHFUtils::CheckLcpKpiDecay(fMCArray, part, labDau);
                     dauInAcc = AreDauInAcc(3, labDau);
@@ -497,20 +502,29 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                     }
                 }
             }
+            if (pdgCode == 521 && fEnableBplus) //Bplus
+            {
+                decay = AliVertexingHFUtils::CheckBplusDecay(fMCArray, part, labDau);
+                if (decay != 1 || labDau[0] == -1 || labDau[1] < 0)
+                    continue;
+
+                dauInAcc = AreDauInAcc(3, labDau);
+                FillCharmGen(part, origin, kBplustoD0pi, dauInAcc);
+            }
         }
     }
 
     //loop on 2 prongs
-    if (fEnable2Prongs)
+    if (fEnable2Prongs || fEnableBplus)
     {
         for (int i2Prong = 0; i2Prong < array2Prong->GetEntriesFast(); i2Prong++)
         {
             AliAODRecoDecayHF2Prong *d = dynamic_cast<AliAODRecoDecayHF2Prong *>(array2Prong->UncheckedAt(i2Prong));
             int issel = -1;
-            if(d->HasSelectionBit(AliRDHFCuts::kD0toKpiCuts))
+            if (d->HasSelectionBit(AliRDHFCuts::kD0toKpiCuts))
                 issel = 3;
 
-            if(fApplyCuts)
+            if (fApplyCuts)
                 issel = fCutsD0toKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
             if (!d || !issel)
                 continue;
@@ -540,7 +554,83 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             }
 
             //fill vector of 2prongs
-            FillCharm2Prong(d, issel);
+            if(fEnable2Prongs)
+                FillCharm2Prong(d, issel);
+
+            if(fEnableBplus)
+            {
+                unsigned int pdgDgBplustoD0pi[2] = {211, 421};
+
+                for(int iTrack=0; iTrack<fAOD->GetNumberOfTracks(); iTrack++)
+                {
+                    AliAODTrack* track = dynamic_cast<AliAODTrack *>(fAOD->GetTrack(iTrack));
+                    if(!track)
+                        continue;
+
+                    if(!track->TestFilterBit(4) || TMath::Abs(track->Eta())>0.8 || track->Pt()<0.3) //minimal track cuts
+                        continue;
+
+                    //we check if the IDs of the tracks are different
+                    AliAODTrack *D0dau[2] = {dynamic_cast<AliAODTrack *>(d->GetDaughter(0)), dynamic_cast<AliAODTrack *>(d->GetDaughter(1))};
+                    unsigned short idD0dau[2] = {static_cast<unsigned short>(D0dau[0]->GetID()), static_cast<unsigned short>(D0dau[1]->GetID())};
+                    if (track->GetID() != idD0dau[0] && track->GetID() != idD0dau[1])
+                    {
+                        AliExternalTrackParam piTrackParams;
+                        piTrackParams.CopyFromVTrack(track);
+                        AliExternalTrackParam D0TrackParams;
+                        D0TrackParams.CopyFromVTrack(d);
+
+                        // we calculate the vertex of the mother candidate
+                        TObjArray BplusdauTracks;
+                        BplusdauTracks.Add(&piTrackParams);
+                        BplusdauTracks.Add(&D0TrackParams);
+                        double dispersion = 0;
+                        AliAODVertex *vertexBplus = ReconstructDisplVertex(origownvtx, &BplusdauTracks, fAOD->GetMagneticField(), dispersion);
+                        if(!vertexBplus)
+                            continue;
+
+                        //use the new vertex to create the Bplus candidate
+                        double xdummy = 0., ydummy = 0.;
+                        double d0z0[2], covd0z0[3], d0[2], d0err[2];
+                        piTrackParams.PropagateToDCA(vertexBplus, fAOD->GetMagneticField(), 100., d0z0, covd0z0);
+                        D0TrackParams.PropagateToDCA(vertexBplus, fAOD->GetMagneticField(), 100., d0z0, covd0z0);
+
+                        //we reconstruct the mother decay prong
+                        double px[2], py[2], pz[2];
+                        px[0] = piTrackParams.Px();
+                        py[0] = piTrackParams.Py();
+                        pz[0] = piTrackParams.Pz();
+                        px[1] = D0TrackParams.Px();
+                        py[1] = D0TrackParams.Py();
+                        pz[1] = D0TrackParams.Pz();
+                        unsigned short id[2];
+                        id[0] = piTrackParams.GetID();
+                        id[1] = D0TrackParams.GetID();
+                        piTrackParams.PropagateToDCA(origownvtx, fAOD->GetMagneticField(), 100., d0z0, covd0z0);
+                        d0[0] = d0z0[0];
+                        d0err[0] = TMath::Sqrt(covd0z0[0]);
+                        D0TrackParams.PropagateToDCA(origownvtx, fAOD->GetMagneticField(), 100., d0z0, covd0z0);
+                        d0[1] = d0z0[0];
+                        d0err[1] = TMath::Sqrt(covd0z0[0]);
+
+                        double dca = D0TrackParams.GetDCA(&piTrackParams, fAOD->GetMagneticField(), xdummy, ydummy);
+                        short chargeBplus = d->Charge() + track->Charge();
+
+                        AliAODRecoDecayHF2Prong Bplus(vertexBplus, px, py, pz, d0, d0err, dca);
+                        Bplus.SetCharge(chargeBplus);
+                        Bplus.GetSecondaryVtx()->AddDaughter(track);
+                        Bplus.GetSecondaryVtx()->AddDaughter(d);
+                        Bplus.SetPrimaryVtxRef((AliAODVertex *)fAOD->GetPrimaryVertex());
+                        Bplus.SetProngIDs(2, id);
+
+                        double invmassBplus = Bplus.InvMass(2, pdgDgBplustoD0pi);
+                        double massBplusPDG = TDatabasePDG::Instance()->GetParticle(521)->Mass();
+                        if(TMath::Abs(massBplusPDG-invmassBplus) > 0.3) //check mass
+                            continue;
+                        //TODO: define B+ struct and fill it
+                    }
+                }
+            }
 
             if (isvtxrecalc)
                 CleanOwnPrimaryVertex(d, origownvtx);
@@ -558,13 +648,13 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             bool isselDplus = d->HasSelectionBit(AliRDHFCuts::kDplusCuts);
             int isselDs = -1;
-            if(d->HasSelectionBit(AliRDHFCuts::kDsCuts))
+            if (d->HasSelectionBit(AliRDHFCuts::kDsCuts))
                 isselDs = 12;
             int isselLc = -1;
-            if(d->HasSelectionBit(AliRDHFCuts::kLcCuts))
+            if (d->HasSelectionBit(AliRDHFCuts::kLcCuts))
                 isselLc = 3;
 
-            if(fApplyCuts)
+            if (fApplyCuts)
             {
                 isselDplus = fCutsDplustoKpipi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
                 isselDs = fCutsDstoKKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
@@ -574,11 +664,11 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!d || (!isselDplus && !isselDs && !isselLc))
                 continue;
 
-            if(!(fEnable3Prongs>>0&1) && (!isselDs && !isselLc))
+            if (!(fEnable3Prongs >> 0 & 1) && (!isselDs && !isselLc))
                 continue;
-            if(!(fEnable3Prongs>>1&1) && (!isselDplus && !isselLc))
+            if (!(fEnable3Prongs >> 1 & 1) && (!isselDplus && !isselLc))
                 continue;
-            if(!(fEnable3Prongs>>2&1) && (!isselDplus && !isselDs))
+            if (!(fEnable3Prongs >> 2 & 1) && (!isselDplus && !isselDs))
                 continue;
 
             fHistNEvents->Fill(10);
@@ -680,7 +770,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             int issel = 3;
             if (fApplyCuts)
                 issel = fCutsLctoV0bach->IsSelected(lc, AliRDHFCuts::kAll, fAOD);
-            if(!issel)
+            if (!issel)
                 continue;
 
             fHistNEvents->Fill(12);
@@ -750,9 +840,9 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong
     ch2Prong.fImpParProd = cand->Getd0Prong(0) * cand->Getd0Prong(1);
 
     ch2Prong.fSelBit = 0;
-    if(issel == 1 || issel == 3)
+    if (issel == 1 || issel == 3)
         ch2Prong.fSelBit |= kDzerotoKpiCuts;
-    if(issel >= 2)
+    if (issel >= 2)
         ch2Prong.fSelBit |= kDzerotopiKCuts;
     if (fCutsD0toKpi->IsSelectedPID(cand) == 1 || fCutsD0toKpi->IsSelectedPID(cand) == 3)
         ch2Prong.fSelBit |= kDzerotoKpiCutsPID;
@@ -838,9 +928,9 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
     }
     if (isselDs)
     {
-        if(isselDs&4)
+        if (isselDs & 4)
             ch3Prong.fSelBit |= kDstoKKpiCuts;
-        if(isselDs&8)
+        if (isselDs & 8)
             ch3Prong.fSelBit |= kDstopiKKCuts;
 
         if (fCutsDstoKKpi->IsSelectedPID(cand) == 1 || fCutsDstoKKpi->IsSelectedPID(cand) == 3)
@@ -852,9 +942,9 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
     }
     if (isselLc)
     {
-        if(isselLc == 1 || isselLc == 3)
+        if (isselLc == 1 || isselLc == 3)
             ch3Prong.fSelBit |= kLctopKpiCuts;
-        if(isselLc >= 2)
+        if (isselLc >= 2)
             ch3Prong.fSelBit |= kLctopiKpCuts;
 
         if (fCutsLctopKpi->IsSelectedPID(cand) == 1 || fCutsLctopKpi->IsSelectedPID(cand) == 1)
@@ -973,7 +1063,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF *cand, Al
     dstar.fNormDecayLengthXYD0 = dau->NormalizedDecayLengthXY();
 
     dstar.fSelBit = 0;
-    if(issel)
+    if (issel)
         dstar.fSelBit |= kDstartoKpipiCuts;
     if (fCutsDstartoKpipi->IsSelectedPID(cand))
         dstar.fSelBit |= kDstartoKpipiCutsPID;
@@ -1034,7 +1124,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF *c
     chCasc.fCosPXYV0 = cand->CosV0PointingAngleXY();
 
     chCasc.fSelBit = 0;
-    if(issel)
+    if (issel)
         chCasc.fSelBit |= kLctoV0bachCuts;
     if (fCutsDstartoKpipi->IsSelectedPID(cand))
         chCasc.fSelBit |= kLctoV0bachCutsPID;
@@ -1184,4 +1274,58 @@ bool AliAnalysisTaskSECharmTriggerStudy::IsInFiducialAcceptance(double pt, doubl
     }
 
     return true;
+}
+
+//________________________________________________________________
+AliAODVertex *AliAnalysisTaskSECharmTriggerStudy::ReconstructDisplVertex(const AliVVertex *primary, TObjArray *tracks, double bField, double dispersion)
+{
+    //
+    // Helper function to recalculate a vertex.
+    //
+
+    AliESDVertex *vertexESD = nullptr;
+    AliAODVertex *vertexAOD = nullptr;
+
+    AliVertexerTracks vertexer;
+    vertexer.SetFieldkG(bField);
+
+    vertexer.SetVtxStart((AliESDVertex *)primary); //primary vertex
+    vertexESD = dynamic_cast<AliESDVertex *>(vertexer.VertexForSelectedESDTracks(tracks));
+    if (!vertexESD)
+        return vertexAOD;
+
+    if (vertexESD->GetNContributors() != tracks->GetEntriesFast())
+    {
+        delete vertexESD;
+        vertexESD = nullptr;
+        return vertexAOD;
+    }
+
+    // convert to AliAODVertex
+    double pos[3], cov[6], chi2perNDF;
+    for (int a = 0; a < 3; a++)
+        pos[a] = 0.;
+    for (int b = 0; b < 6; b++)
+        cov[b] = 0.;
+    chi2perNDF = 0;
+
+    vertexESD->GetXYZ(pos);       // position
+    vertexESD->GetCovMatrix(cov); //covariance matrix
+
+    double vertRadius2 = pos[0] * pos[0] + pos[1] * pos[1];
+    if (vertRadius2 > 8.)
+    { //(2.82)^2 radius beam pipe
+        delete vertexESD;
+        vertexESD = nullptr;
+        return vertexAOD;
+    }
+
+    chi2perNDF = vertexESD->GetChi2toNDF();
+    dispersion = vertexESD->GetDispersion();
+    delete vertexESD;
+    vertexESD = nullptr;
+    int nprongs = tracks->GetEntriesFast();
+    vertexAOD = new AliAODVertex(pos, cov, chi2perNDF, nullptr, -1, AliAODVertex::kUndef, nprongs);
+
+    return vertexAOD;
 }

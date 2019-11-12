@@ -147,7 +147,8 @@ public:
         kLctopKpi,
         kLctopiKp,
         kLctopK0s,
-        kLctopiLambda
+        kLctopiLambda,
+        kBplustoD0pi
     };
 
     enum kSelBit
@@ -196,9 +197,10 @@ public:
     void Enable2Prongs(bool enable = true)               {fEnable2Prongs = enable;}
     void Enable3Prongs(bool enableDplus = true,
                        bool enableDs = true,
-                       bool enableLc = true)             {fEnable3Prongs = 0; if(enableDplus) fEnable3Prongs |= BIT(1); if(enableDs) fEnable3Prongs |= BIT(2); if(enableLc) fEnable3Prongs |= BIT(3);}
+                       bool enableLc = true)             {fEnable3Prongs = 0; if(enableDplus) fEnable3Prongs |= BIT(0); if(enableDs) fEnable3Prongs |= BIT(1); if(enableLc) fEnable3Prongs |= BIT(2);}
     void EnableDstars(bool enable = true)                {fEnableDstars = enable;}
     void EnableCascades(bool enable = true)              {fEnableCascades = enable;}
+    void EnableBplus(bool enable = true)                 {fEnableBplus = enable;}
     void SetFillOnlySignal(bool fillonlysignal = true)   {fFillOnlySignal = fillonlysignal;}
 
     void SetSystem(int system = kpp)                     {fSystem = system;}
@@ -215,6 +217,7 @@ private:
     void CleanOwnPrimaryVertex(AliAODRecoDecayHF* cand, AliAODVertex* origvtx);
     bool AreDauInAcc(int nProng, int *labDau);
     bool IsInFiducialAcceptance(double pt, double y);
+    AliAODVertex* ReconstructDisplVertex(const AliVVertex *primary, TObjArray *tracks, double bField, double dispersion);
 
     TList *fOutput;                             //!<! List of output histograms
     TH1F* fHistNEvents;                         //!<! Histogram for event info
@@ -239,6 +242,7 @@ private:
     int fEnable3Prongs;                         /// flag to enable 3-prong branch (with D+ and/or Ds+ and/or Lc)
     bool fEnableDstars;                         /// flag to enable Dstar branch
     bool fEnableCascades;                       /// flag to enable cascade branch
+    bool fEnableBplus;                          /// flag to enable B+
     bool fFillOnlySignal;                       /// flag to fill only signal
 
     AliRDHFCutsD0toKpi* fCutsD0toKpi;           /// cut object for D0->Kpi
