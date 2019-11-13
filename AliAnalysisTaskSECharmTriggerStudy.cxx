@@ -971,7 +971,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
             labDplustoKKpi = cand->MatchToMC(411, fMCArray, 3, pdgDgDstoKKpi);
             if (labDplustoKKpi < 0)
             {
-                labLc = cand->MatchToMC(4122, fMCArray, 3, pdgDgDstoKKpi);
+                labLc = cand->MatchToMC(4122, fMCArray, 3, pdgDgLctopKpi);
                 if (labLc >= 0)
                 {
                     ch3Prong.fGenLabel = labLc;
