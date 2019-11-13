@@ -41,8 +41,6 @@ struct Charm2Prong
     Double32_t fCosP;                   //[0.67233000,1.,15]
     Double32_t fCosPXY;                 //[0.67233000,1.,15]
     Double32_t fDecayLength;            //[0.0,6.5536,16]
-    Double32_t fDecayLengthXY;          //[0.0,6.5536,16]
-    Double32_t fNormDecayLength;        //[0.0,102.4.,10]
     Double32_t fNormDecayLengthXY;      //[0.0,102.4,10]
     Double32_t fImpParProd;             //[-0.32768,0.32768,16]
     int fGenLabel;                      /// label to match with MC
@@ -67,8 +65,6 @@ struct Charm3Prong
     Double32_t fCosP;                   //[0.67233000,1.,15]
     Double32_t fCosPXY;                 //[0.67233000,1.,15]
     Double32_t fDecayLength;            //[0.0,6.5535,16]
-    Double32_t fDecayLengthXY;          //[0.0,6.5535,16]
-    Double32_t fNormDecayLength;        //[0.0,102.3.,10]
     Double32_t fNormDecayLengthXY;      //[0.0,102.3,10]
     Double32_t fSigmaVtx;               //[0.0,0.08190,12]
     int fGenLabel;                      /// label to match with MC
@@ -86,8 +82,6 @@ struct Dstar
     Double32_t fCosPD0;                 //[0.67233000,1.,15]
     Double32_t fCosPXYD0;               //[0.67233000,1.,15]
     Double32_t fDecayLengthD0;          //[0.0,6.5535,16]
-    Double32_t fDecayLengthXYD0;        //[0.0,6.5535,16]
-    Double32_t fNormDecayLengthD0;      //[0.0,102.3.,10]
     Double32_t fNormDecayLengthXYD0;    //[0.0,102.3,10]
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
@@ -111,7 +105,29 @@ struct CharmCascade
     int fSelBit;                        /// selection bit
 };
 
-struct GenCharmHadron
+struct Beauty2Prong
+{
+    float fInvMassBplustoD0pi;
+    Double32_t fPt;                     //[0.0,65.535,16]
+    Double32_t fY;                      //[-1.023,1.023,11]
+    Double32_t fCosP;                   //[0.67233000,1.,15]
+    Double32_t fCosPXY;                 //[0.67233000,1.,15]
+    Double32_t fDecayLength;            //[0.0,6.5536,16]
+    Double32_t fNormDecayLengthXY;      //[0.0,102.4,10]
+    Double32_t fImpParProd;             //[-0.32768,0.32768,16]
+    Double32_t fPtD0;                   //[0.0,65.535,16]
+    Double32_t fCosPD0;                 //[0.67233000,1.,15]
+    Double32_t fCosPXYD0;               //[0.67233000,1.,15]
+    Double32_t fDecayLengthD0;          //[0.0,6.5536,16]
+    Double32_t fNormDecayLengthXYD0;    //[0.0,102.4,10]
+    Double32_t fImpParProdD0;           //[-0.32768,0.32768,16]
+    int fGenLabel;                      /// label to match with MC
+    unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
+    unsigned char fDecay;               /// flag for decay channel
+    int fSelBit;                        /// selection bit
+};
+
+struct GenHadron
 {
     float fPt;
     float fY;
@@ -162,21 +178,23 @@ public:
         kLctopKpiCuts        = BIT(6),
         kLctopiKpCuts        = BIT(7),
         kLctoV0bachCuts      = BIT(8),
-        kDzerotoKpiCutsPID   = BIT(9),
-        kDzerotopiKCutsPID   = BIT(10),
-        kDplustoKpipiCutsPID = BIT(11),
-        kDstartoKpipiCutsPID = BIT(12),
-        kDstoKKpiCutsPID     = BIT(13),
-        kDstopiKKCutsPID     = BIT(14),
-        kLctopKpiCutsPID     = BIT(15),
-        kLctopiKpCutsPID     = BIT(16),
-        kLctoV0bachCutsPID   = BIT(17),
-        kDzerotoKpiFidAcc    = BIT(18),
-        kDplustoKpipiFidAcc  = BIT(19),
-        kDstartoKpipiFidAcc  = BIT(20),
-        kDstoKKpiFidAcc      = BIT(21),
-        kLctopKpiFidAcc      = BIT(22),
-        kLctoV0bachFidAcc    = BIT(23)
+        kBplustoD0piCuts     = BIT(9),
+        kDzerotoKpiCutsPID   = BIT(10),
+        kDzerotopiKCutsPID   = BIT(11),
+        kDplustoKpipiCutsPID = BIT(12),
+        kDstartoKpipiCutsPID = BIT(13),
+        kDstoKKpiCutsPID     = BIT(14),
+        kDstopiKKCutsPID     = BIT(15),
+        kLctopKpiCutsPID     = BIT(16),
+        kLctopiKpCutsPID     = BIT(17),
+        kLctoV0bachCutsPID   = BIT(18),
+        kDzerotoKpiFidAcc    = BIT(19),
+        kDplustoKpipiFidAcc  = BIT(20),
+        kDstartoKpipiFidAcc  = BIT(21),
+        kDstoKKpiFidAcc      = BIT(22),
+        kLctopKpiFidAcc      = BIT(23),
+        kLctoV0bachFidAcc    = BIT(24),
+        kBplustoD0piFidAcc   = BIT(25)
     };
 
     enum kSystem
@@ -212,7 +230,8 @@ private:
     void FillCharm3Prong(AliAODRecoDecayHF3Prong* cand, bool isselDplus, int isselDs, int isselLc);
     void FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau, bool issel);
     void FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau, int issel);
-    void FillCharmGen(AliAODMCParticle* part, int origin, int decay, bool aredauinacc);
+    void FillBeauty2Prong(AliAODRecoDecayHF2Prong* cand, AliAODRecoDecayHF2Prong* dau, bool issel);
+    void FillGenerated(AliAODMCParticle* part, int origin, int decay, bool aredauinacc);
     bool RecalcOwnPrimaryVertex(AliAODRecoDecayHF* cand);
     void CleanOwnPrimaryVertex(AliAODRecoDecayHF* cand, AliAODVertex* origvtx);
     bool AreDauInAcc(int nProng, int *labDau);
@@ -232,11 +251,12 @@ private:
     float fRecoZvtx;                            /// Z of the reconstructed primary vertex
     float fGenZvtx;                             /// Z of the generated primary vertex
 
-    vector<Charm2Prong> fCharm2Prong;           /// vector of 2 prongs
-    vector<Charm3Prong> fCharm3Prong;           /// vector of 3 prongs
+    vector<Charm2Prong> fCharm2Prong;           /// vector of charm 2 prongs
+    vector<Charm3Prong> fCharm3Prong;           /// vector of charm 3 prongs
     vector<Dstar> fDstar;                       /// vector of Dstar
-    vector<CharmCascade> fCharmCascade;         /// vector of cascades
-    vector<GenCharmHadron> fGenCharmHadron;     /// vector of generated charm hadrons
+    vector<CharmCascade> fCharmCascade;         /// vector of charm cascades
+    vector<Beauty2Prong> fBeauty2Prong;         /// vector of beauty 2 prongs
+    vector<GenHadron> fGenHadron;               /// vector of generated charm/beauty hadrons
 
     bool fEnable2Prongs;                        /// flag to enable 2-prong branch
     int fEnable3Prongs;                         /// flag to enable 3-prong branch (with D+ and/or Ds+ and/or Lc)
