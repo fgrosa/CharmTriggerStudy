@@ -250,6 +250,7 @@ private:
     TClonesArray* fMCArray;                     //!<! MC array
     float fRecoZvtx;                            /// Z of the reconstructed primary vertex
     float fGenZvtx;                             /// Z of the generated primary vertex
+    int fNtracklets;                            /// number of tracklets in |eta| < 1
 
     vector<Charm2Prong> fCharm2Prong;           /// vector of charm 2 prongs
     vector<Charm3Prong> fCharm3Prong;           /// vector of charm 3 prongs

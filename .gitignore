@@ -5,3 +5,4 @@
 *.root
 stderr
 stdout
+__pycache__

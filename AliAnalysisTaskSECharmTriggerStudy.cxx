@@ -59,6 +59,7 @@ AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const cha
                                                                                                            fMCArray(nullptr),
                                                                                                            fRecoZvtx(-999.),
                                                                                                            fGenZvtx(-999.),
+                                                                                                           fNtracklets(-1.),
                                                                                                            fCharm2Prong{},
                                                                                                            fCharm3Prong{},
                                                                                                            fDstar{},
@@ -181,6 +182,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
 
     fRecoTree = new TTree("fRecoTree", "Reconstructed charm hadron candidates");
     fRecoTree->Branch("zVtxReco", &fRecoZvtx);
+    fRecoTree->Branch("Ntracklets", &fNtracklets);
     if (fEnable2Prongs)
         fRecoTree->Branch("Charm2Prong", &fCharm2Prong);
     if (fEnable3Prongs)
@@ -343,7 +345,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
         arrayCasc = dynamic_cast<TClonesArray *>(fAOD->GetList()->FindObject("CascadesHF"));
     }
 
-    if (!fAOD || (fEnable3Prongs && !array3Prong) || (fEnable2Prongs && !array2Prong) || (fEnableCascades && !arrayCasc) || (fEnableDstars && !arrayDstar))
+    if (!fAOD || (fEnable3Prongs && !array3Prong) || ((fEnable2Prongs || fEnableBplus) && !array2Prong) || (fEnableCascades && !arrayCasc) || (fEnableDstars && !arrayDstar))
     {
         AliWarning("Candidate branch not found!");
         return;
@@ -384,8 +386,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
     AliAODVertex *primVtx = dynamic_cast<AliAODVertex *>(fAOD->GetPrimaryVertex());
     fRecoZvtx = primVtx->GetZ();
+    fNtracklets = AliVertexingHFUtils::GetNumberOfTrackletsInEtaRange(fAOD,-1.,1.);
 
-    if (fEnable2Prongs)
+    if (fEnable2Prongs || fEnableBplus)
     {
         fCutsD0toKpi->SetupPID(fAOD);
     }
@@ -532,7 +535,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!d || !issel)
                 continue;
 
-            fHistNEvents->Fill(9);
+            fHistNEvents->Fill(7);
 
             //check if primary vtx is set
             bool unsetvtx = false;
@@ -557,20 +560,20 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             }
 
             //fill vector of 2prongs
-            if(fEnable2Prongs)
+            if (fEnable2Prongs)
                 FillCharm2Prong(d, issel);
 
-            if(fEnableBplus)
+            if (fEnableBplus)
             {
-                for(int iTrack=0; iTrack<fAOD->GetNumberOfTracks(); iTrack++)
+                for (int iTrack = 0; iTrack < fAOD->GetNumberOfTracks(); iTrack++)
                 {
-                    AliAODTrack* track = dynamic_cast<AliAODTrack *>(fAOD->GetTrack(iTrack));
-                    if(!track)
+                    AliAODTrack *track = dynamic_cast<AliAODTrack *>(fAOD->GetTrack(iTrack));
+                    if (!track)
                         continue;
 
-                    if(!track->TestFilterBit(4) || TMath::Abs(track->Eta())>0.8 || track->Pt()<0.3) //minimal track cuts
+                    if (!track->TestFilterBit(4) || TMath::Abs(track->Eta()) > 0.8 || track->Pt() < 0.3) //minimal track cuts
                         continue;
-                    if( (track->Charge() > 0 && issel == 1) || (track->Charge() < 0 && issel == 2)) //keep only correct mass hypothesis
+                    if ((track->Charge() > 0 && issel == 1) || (track->Charge() < 0 && issel == 2)) //keep only correct mass hypothesis
                         continue;
 
                     //we check if the IDs of the tracks are different
@@ -589,7 +592,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                         BplusdauTracks.Add(&D0TrackParams);
                         double dispersion = 0;
                         AliAODVertex *vertexBplus = ReconstructDisplVertex(fAOD->GetPrimaryVertex(), &BplusdauTracks, fAOD->GetMagneticField(), dispersion);
-                        if(!vertexBplus)
+                        if (!vertexBplus)
                             continue;
 
                         //use the new vertex to create the Bplus candidate
@@ -671,7 +674,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!(fEnable3Prongs >> 2 & 1) && (!isselDplus && !isselDs))
                 continue;
 
-            fHistNEvents->Fill(10);
+            fHistNEvents->Fill(8);
 
             //check if primary vtx is set
             bool unsetvtx = false;
@@ -722,7 +725,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!d0)
                 continue;
 
-            fHistNEvents->Fill(11);
+            fHistNEvents->Fill(9);
 
             //check if primary vtx is set
             bool unsetvtx = false;
@@ -773,7 +776,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!issel)
                 continue;
 
-            fHistNEvents->Fill(12);
+            fHistNEvents->Fill(10);
 
             //check if primary vtx is set
             bool unsetvtx = false;
@@ -1182,14 +1185,14 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF *c
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::FillBeauty2Prong(AliAODRecoDecayHF2Prong* cand, AliAODRecoDecayHF2Prong *dau, bool issel)
+void AliAnalysisTaskSECharmTriggerStudy::FillBeauty2Prong(AliAODRecoDecayHF2Prong *cand, AliAODRecoDecayHF2Prong *dau, bool issel)
 {
     Beauty2Prong b2Prong;
     unsigned int pdgDgBplustoD0pi[2] = {211, 421};
     int pdgDgD0topiK[2] = {211, 321};
     double invmassBplus = cand->InvMass(2, pdgDgBplustoD0pi);
     double massBplusPDG = TDatabasePDG::Instance()->GetParticle(521)->Mass();
-    if(TMath::Abs(massBplusPDG-invmassBplus) > 0.3) //check mass
+    if (TMath::Abs(massBplusPDG - invmassBplus) > 0.3) //check mass
         return;
 
     b2Prong.fInvMassBplustoD0pi = invmassBplus;
@@ -1208,10 +1211,10 @@ void AliAnalysisTaskSECharmTriggerStudy::FillBeauty2Prong(AliAODRecoDecayHF2Pron
     b2Prong.fImpParProd = dau->Getd0Prong(0) * dau->Getd0Prong(1);
 
     b2Prong.fSelBit = 0;
-    if(issel)
+    if (issel)
         b2Prong.fSelBit |= kBplustoD0piCuts;
 
-    b2Prong.fGenLabel = cand->MatchToMCB2Prong(521, 421, reinterpret_cast<int*>(pdgDgBplustoD0pi), pdgDgD0topiK, fMCArray);
+    b2Prong.fGenLabel = cand->MatchToMCB2Prong(521, 421, reinterpret_cast<int *>(pdgDgBplustoD0pi), pdgDgD0topiK, fMCArray);
     b2Prong.fDecay = kNone;
     b2Prong.fCandType = 0;
     if (b2Prong.fGenLabel < 0)
