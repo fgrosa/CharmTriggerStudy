@@ -182,7 +182,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
 
     fRecoTree = new TTree("fRecoTree", "Reconstructed charm hadron candidates");
     fRecoTree->Branch("zVtxReco", &fRecoZvtx);
-    fRecoTree->Branch("Ntracklets", &fNtracklets);
+    fRecoTree->Branch("Ntracklets", &fNtracklets)
     if (fEnable2Prongs)
         fRecoTree->Branch("Charm2Prong", &fCharm2Prong);
     if (fEnable3Prongs)
