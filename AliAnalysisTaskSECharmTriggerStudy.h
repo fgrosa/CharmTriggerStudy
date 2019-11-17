@@ -245,8 +245,8 @@ public:
                        bool enableLc = true)             {fEnable3Prongs = 0; if(enableDplus) fEnable3Prongs |= BIT(0); if(enableDs) fEnable3Prongs |= BIT(1); if(enableLc) fEnable3Prongs |= BIT(2);}
     void EnableDstars(bool enable = true)                {fEnableDstars = enable;}
     void EnableCascades(bool enable = true)              {fEnableCascades = enable;}
-    void EnableBeauty3Prong(bool enable = true)          {fEnableBeauty3Prong = enable;}
-    void EnableBeauty4Prong(bool enableB0 = true)        {fEnableBeauty4Prong |= BIT(0);}
+    void EnableBeauty3Prongs(bool enable = true)         {fEnableBeauty3Prongs = enable;}
+    void EnableBeauty4Prongs(bool enableB0 = true)       {fEnableBeauty4Prongs = 0; if(enableB0) fEnableBeauty4Prongs |= BIT(0);}
     void SetFillOnlySignal(bool fillonlysignal = true)   {fFillOnlySignal = fillonlysignal;}
 
     void SetSystem(int system = kpp)                     {fSystem = system;}
@@ -293,8 +293,8 @@ private:
     int fEnable3Prongs;                         /// flag to enable 3-prong branch (with D+ and/or Ds+ and/or Lc)
     bool fEnableDstars;                         /// flag to enable Dstar branch
     bool fEnableCascades;                       /// flag to enable cascade branch
-    bool fEnableBeauty3Prong;                   /// flag to enable B+
-    int fEnableBeauty4Prong;                    /// flag to enable B0 / Bs / Lb
+    bool fEnableBeauty3Prongs;                  /// flag to enable B+
+    int fEnableBeauty4Prongs;                   /// flag to enable B0 / Bs / Lb
     bool fFillOnlySignal;                       /// flag to fill only signal
 
     AliRDHFCutsD0toKpi* fCutsD0toKpi;           /// cut object for D0->Kpi
