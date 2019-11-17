@@ -6,6 +6,7 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
                                                              bool enableDstars = true,
                                                              bool enableCascades = false,
                                                              bool enableBplus = false,
+                                                             bool enableB0 = false,
                                                              bool fillOnlySignal = false,
                                                              TString cutfilename = "",
                                                              bool applyCuts = false,
@@ -77,7 +78,8 @@ AliAnalysisTaskSECharmTriggerStudy *AddTaskCharmTriggerStudy(int system = AliAna
     chTask->Enable3Prongs(enable3prongsDplus, enable3prongsDs, enable3prongsLc);
     chTask->EnableDstars(enableDstars);
     chTask->EnableCascades(enableCascades);
-    chTask->EnableBplus(enableBplus);
+    chTask->EnableBeauty3Prong(enableBplus);
+    chTask->EnableBeauty4Prong(enableB0);
     chTask->SetFillOnlySignal(fillOnlySignal);
     chTask->SetSystem(system);
     chTask->ApplyCuts(applyCuts);

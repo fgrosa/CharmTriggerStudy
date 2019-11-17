@@ -50,8 +50,8 @@ void CreateCutObjects(TString outfilename = "D0DplusDsLcPreselectionCuts.root")
 
     //m    dca      cost*  ptk ptpi  d0k          d0pi       d0d0          cosp  cosxy normdxy
     float cutsMatrixD0toKpiStand[nptbins][nvarsD0]=  {
-        {0.400,350.*1E-4, 0.8, 0.3, 0.3, 1000.*1E-4, 1000.*1E-4, -2000. *1E-8, 0.7,  0.,0.},
-        {0.400,350.*1E-4, 0.8, 0.3, 0.3, 1000.*1E-4, 1000.*1E-4, -2000. *1E-8, 0.7,  0.,0.}};
+        {0.300, 300.*1E-4, 0.8, 0.3, 0.3, 1000.*1E-4, 1000.*1E-4, -2000. *1E-8, 0.7,  0., 0.},
+        {0.300, 300.*1E-4, 1.0, 0.3, 0.3, 1000.*1E-4, 1000.*1E-4, 100000. *1E-8, 0.7, 0., 0.}};
 
     float **cutsMatrixTransposeStand = new float*[nvarsD0];
     for(int iv=0;iv<nvarsD0;iv++)

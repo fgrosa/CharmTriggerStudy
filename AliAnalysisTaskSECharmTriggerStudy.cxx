@@ -64,13 +64,15 @@ AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const cha
                                                                                                            fCharm3Prong{},
                                                                                                            fDstar{},
                                                                                                            fCharmCascade{},
-                                                                                                           fBeauty2Prong{},
+                                                                                                           fBeauty3Prong{},
+                                                                                                           fBeauty4Prong{},
                                                                                                            fGenHadron{},
                                                                                                            fEnable2Prongs(true),
                                                                                                            fEnable3Prongs(0),
                                                                                                            fEnableDstars(false),
                                                                                                            fEnableCascades(false),
-                                                                                                           fEnableBplus(false),
+                                                                                                           fEnableBeauty3Prong(false),
+                                                                                                           fEnableBeauty4Prong(false),
                                                                                                            fFillOnlySignal(false),
                                                                                                            fCutsD0toKpi(nullptr),
                                                                                                            fCutsDplustoKpipi(nullptr),
@@ -182,7 +184,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
 
     fRecoTree = new TTree("fRecoTree", "Reconstructed charm hadron candidates");
     fRecoTree->Branch("zVtxReco", &fRecoZvtx);
-    fRecoTree->Branch("Ntracklets", &fNtracklets)
+    fRecoTree->Branch("Ntracklets", &fNtracklets);
     if (fEnable2Prongs)
         fRecoTree->Branch("Charm2Prong", &fCharm2Prong);
     if (fEnable3Prongs)
@@ -191,8 +193,10 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
         fRecoTree->Branch("Dstar", &fDstar);
     if (fEnableCascades)
         fRecoTree->Branch("CharmCascade", &fCharmCascade);
-    if (fEnableBplus)
-        fRecoTree->Branch("Beauty2Prong", &fBeauty2Prong);
+    if (fEnableBeauty3Prong)
+        fRecoTree->Branch("Beauty3Prong", &fBeauty3Prong);
+    if (fEnableBeauty4Prong)
+        fRecoTree->Branch("Beauty4Prong", &fBeauty4Prong);
 
     fGenTree = new TTree("fGenTree", "Generate charm hadrons");
     fGenTree->Branch("zVtxGen", &fGenZvtx);
@@ -204,7 +208,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
 
     //cut objects
     float ptbins[2] = {0., 100.};
-    if (fEnable2Prongs || fEnableBplus)
+    if (fEnable2Prongs || fEnableBeauty3Prong)
     {
         if (!fCutsD0toKpi)
         { //cut object for PID
@@ -229,7 +233,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
             fCutsD0toKpi->SetUseDefaultPID(false);
         }
     }
-    if (fEnable3Prongs)
+    if (fEnable3Prongs || fEnableBeauty4Prong)
     {
         if (!fCutsDplustoKpipi)
         { //cut object for PID
@@ -345,7 +349,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
         arrayCasc = dynamic_cast<TClonesArray *>(fAOD->GetList()->FindObject("CascadesHF"));
     }
 
-    if (!fAOD || (fEnable3Prongs && !array3Prong) || ((fEnable2Prongs || fEnableBplus) && !array2Prong) || (fEnableCascades && !arrayCasc) || (fEnableDstars && !arrayDstar))
+    if (!fAOD || ((fEnable3Prongs || fEnableBeauty4Prong) && !array3Prong) || ((fEnable2Prongs || fEnableBeauty3Prong) && !array2Prong) || (fEnableCascades && !arrayCasc) || (fEnableDstars && !arrayDstar))
     {
         AliWarning("Candidate branch not found!");
         return;
@@ -388,11 +392,11 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     fRecoZvtx = primVtx->GetZ();
     fNtracklets = AliVertexingHFUtils::GetNumberOfTrackletsInEtaRange(fAOD,-1.,1.);
 
-    if (fEnable2Prongs || fEnableBplus)
+    if (fEnable2Prongs || fEnableBeauty3Prong)
     {
         fCutsD0toKpi->SetupPID(fAOD);
     }
-    if (fEnable3Prongs)
+    if (fEnable3Prongs || fEnableBeauty4Prong)
     {
         fCutsDplustoKpipi->SetupPID(fAOD);
         fCutsDstoKKpi->SetupPID(fAOD);
@@ -415,7 +419,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             continue;
 
         int pdgCode = TMath::Abs(part->GetPdgCode());
-        if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122 || pdgCode == 521)
+        if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122 || pdgCode == 521 || pdgCode == 511)
         {
             int origin = 4; //beauty assumed to be always prompt
             if (pdgCode != 521)
@@ -508,7 +512,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                     }
                 }
             }
-            if (pdgCode == 521 && fEnableBplus) //Bplus
+            if (pdgCode == 521 && fEnableBeauty3Prong) //Bplus
             {
                 decay = AliVertexingHFUtils::CheckBplusDecay(fMCArray, part, labDau);
                 if (decay != 1 || labDau[0] == -1 || labDau[1] < 0)
@@ -517,11 +521,20 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                 dauInAcc = AreDauInAcc(3, labDau);
                 FillGenerated(part, origin, kBplustoD0pi, dauInAcc);
             }
+            if(pdgCode == 511 && fEnableBeauty4Prong >> 0 & 1) //B0
+            {
+                decay = AliVertexingHFUtils::CheckB0toDminuspiDecay(fMCArray, part, labDau);
+                if (decay != 1 || labDau[0] == -1 || labDau[1] < 0)
+                    continue;
+
+                dauInAcc = AreDauInAcc(3, labDau);
+                FillGenerated(part, origin, kB0toDminuspi, dauInAcc);
+            }
         }
     }
 
     //loop on 2 prongs
-    if (fEnable2Prongs || fEnableBplus)
+    if (fEnable2Prongs || fEnableBeauty3Prong)
     {
         for (int i2Prong = 0; i2Prong < array2Prong->GetEntriesFast(); i2Prong++)
         {
@@ -563,7 +576,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (fEnable2Prongs)
                 FillCharm2Prong(d, issel);
 
-            if (fEnableBplus)
+            if (fEnableBeauty3Prong)
             {
                 for (int iTrack = 0; iTrack < fAOD->GetNumberOfTracks(); iTrack++)
                 {
@@ -630,7 +643,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                         Bplus.SetProngIDs(2, id);
 
                         //TODO: define B+ struct and fill it
-                        FillBeauty2Prong(&Bplus, d, true);
+                        FillBeauty3Prong(&Bplus, d, true);
                     }
                 }
             }
@@ -817,7 +830,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     fCharm3Prong.clear();
     fDstar.clear();
     fCharmCascade.clear();
-    fBeauty2Prong.clear();
+    fBeauty3Prong.clear();
     fGenHadron.clear();
 
     PostData(1, fOutput);
@@ -1185,54 +1198,110 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF *c
 }
 
 //________________________________________________________________________
-void AliAnalysisTaskSECharmTriggerStudy::FillBeauty2Prong(AliAODRecoDecayHF2Prong *cand, AliAODRecoDecayHF2Prong *dau, bool issel)
+void AliAnalysisTaskSECharmTriggerStudy::FillBeauty3Prong(AliAODRecoDecayHF2Prong *cand, AliAODRecoDecayHF2Prong *dau, bool issel)
 {
-    Beauty2Prong b2Prong;
+    Beauty3Prong b3Prong;
     unsigned int pdgDgBplustoD0pi[2] = {211, 421};
     int pdgDgD0topiK[2] = {211, 321};
     double invmassBplus = cand->InvMass(2, pdgDgBplustoD0pi);
     double massBplusPDG = TDatabasePDG::Instance()->GetParticle(521)->Mass();
-    if (TMath::Abs(massBplusPDG - invmassBplus) > 0.3) //check mass
+    if (TMath::Abs(massBplusPDG - invmassBplus) > 0.4) //check mass
         return;
 
-    b2Prong.fInvMassBplustoD0pi = invmassBplus;
-    b2Prong.fPt = cand->Pt();
-    b2Prong.fY = cand->Y(521);
-    b2Prong.fDecayLength = cand->DecayLength();
-    b2Prong.fNormDecayLengthXY = cand->NormalizedDecayLengthXY();
-    b2Prong.fCosP = cand->CosPointingAngle();
-    b2Prong.fCosPXY = cand->CosPointingAngleXY();
-    b2Prong.fImpParProd = cand->Getd0Prong(0) * cand->Getd0Prong(1);
-    b2Prong.fPtD0 = dau->Pt();
-    b2Prong.fCosPD0 = dau->CosPointingAngle();
-    b2Prong.fCosPXYD0 = dau->CosPointingAngleXY();
-    b2Prong.fDecayLengthD0 = dau->DecayLength();
-    b2Prong.fNormDecayLengthXYD0 = dau->NormalizedDecayLengthXY();
-    b2Prong.fImpParProd = dau->Getd0Prong(0) * dau->Getd0Prong(1);
+    b3Prong.fInvMassBplustoD0pi = invmassBplus;
+    b3Prong.fPt = cand->Pt();
+    b3Prong.fY = cand->Y(521);
+    b3Prong.fDecayLength = cand->DecayLength();
+    b3Prong.fNormDecayLengthXY = cand->NormalizedDecayLengthXY();
+    b3Prong.fCosP = cand->CosPointingAngle();
+    b3Prong.fCosPXY = cand->CosPointingAngleXY();
+    b3Prong.fImpParProd = cand->Getd0Prong(0) * cand->Getd0Prong(1);
+    b3Prong.fPtD0 = dau->Pt();
+    b3Prong.fCosPD0 = dau->CosPointingAngle();
+    b3Prong.fCosPXYD0 = dau->CosPointingAngleXY();
+    b3Prong.fDecayLengthD0 = dau->DecayLength();
+    b3Prong.fNormDecayLengthXYD0 = dau->NormalizedDecayLengthXY();
+    b3Prong.fImpParProd = dau->Getd0Prong(0) * dau->Getd0Prong(1);
+    if (cand->Charge() > 0)
+        b3Prong.fInvMassD0 = dau->InvMassD0bar();
+    else
+        b3Prong.fInvMassD0 = dau->InvMassD0();
 
-    b2Prong.fSelBit = 0;
+    b3Prong.fSelBit = 0;
     if (issel)
-        b2Prong.fSelBit |= kBplustoD0piCuts;
+        b3Prong.fSelBit |= kBplustoD0piCuts;
 
-    b2Prong.fGenLabel = cand->MatchToMCB2Prong(521, 421, reinterpret_cast<int *>(pdgDgBplustoD0pi), pdgDgD0topiK, fMCArray);
-    b2Prong.fDecay = kNone;
-    b2Prong.fCandType = 0;
-    if (b2Prong.fGenLabel < 0)
+    b3Prong.fGenLabel = cand->MatchToMCB2Prong(521, 421, reinterpret_cast<int *>(pdgDgBplustoD0pi), pdgDgD0topiK, fMCArray);
+    b3Prong.fDecay = kNone;
+    b3Prong.fCandType = 0;
+    if (b3Prong.fGenLabel < 0)
     {
-        b2Prong.fCandType |= kBackground;
+        b3Prong.fCandType |= kBackground;
         if (fFillOnlySignal)
             return;
     }
     else
     {
-        b2Prong.fCandType |= kSignal;
-        b2Prong.fCandType |= kPrompt; //beauty always prompt
-        b2Prong.fDecay = kBplustoD0pi;
+        b3Prong.fCandType |= kSignal;
+        b3Prong.fCandType |= kPrompt; //beauty always prompt
+        b3Prong.fDecay = kBplustoD0pi;
     }
-    if (IsInFiducialAcceptance(b2Prong.fPt, b2Prong.fY))
-        b2Prong.fSelBit |= kIsInFidAcc;
+    if (IsInFiducialAcceptance(b3Prong.fPt, b3Prong.fY))
+        b3Prong.fSelBit |= kIsInFidAcc;
 
-    fBeauty2Prong.push_back(b2Prong);
+    fBeauty3Prong.push_back(b3Prong);
+}
+
+//________________________________________________________________________
+void AliAnalysisTaskSECharmTriggerStudy::FillBeauty4Prong(AliAODRecoDecayHF2Prong *cand, AliAODRecoDecayHF3Prong *dau, bool issel)
+{
+    Beauty4Prong b4Prong;
+    unsigned int pdgDgB0toDminuspi[2] = {211, 411};
+    int pdgDgDplustopipiK[3] = {211, 211, 321};
+    double invmassB0 = cand->InvMass(2, pdgDgB0toDminuspi);
+    double massB0PDG = TDatabasePDG::Instance()->GetParticle(511)->Mass();
+    if (TMath::Abs(massB0PDG - invmassB0) > 0.4) //check mass
+        return;
+
+    b4Prong.fInvMassB0toDminuspi = invmassB0;
+    b4Prong.fPt = cand->Pt();
+    b4Prong.fY = cand->Y(511);
+    b4Prong.fDecayLength = cand->DecayLength();
+    b4Prong.fNormDecayLengthXY = cand->NormalizedDecayLengthXY();
+    b4Prong.fCosP = cand->CosPointingAngle();
+    b4Prong.fCosPXY = cand->CosPointingAngleXY();
+    b4Prong.fImpParProd = cand->Getd0Prong(0) * cand->Getd0Prong(1);
+    b4Prong.fPtD = dau->Pt();
+    b4Prong.fCosPD = dau->CosPointingAngle();
+    b4Prong.fCosPXYD = dau->CosPointingAngleXY();
+    b4Prong.fDecayLengthD = dau->DecayLength();
+    b4Prong.fNormDecayLengthXYD = dau->NormalizedDecayLengthXY();
+    b4Prong.fSigmaVtxD = dau->GetSigmaVert();
+    b4Prong.fInvMassD = dau->InvMassDplus();
+
+    b4Prong.fSelBit = 0;
+    if (issel)
+        b4Prong.fSelBit |= kB0toDminuspiCuts;
+
+    b4Prong.fGenLabel = cand->MatchToMCB3Prong(511, 411, reinterpret_cast<int *>(pdgDgB0toDminuspi), pdgDgDplustopipiK, fMCArray);
+    b4Prong.fDecay = kNone;
+    b4Prong.fCandType = 0;
+    if (b4Prong.fGenLabel < 0)
+    {
+        b4Prong.fCandType |= kBackground;
+        if (fFillOnlySignal)
+            return;
+    }
+    else
+    {
+        b4Prong.fCandType |= kSignal;
+        b4Prong.fCandType |= kPrompt; //beauty always prompt
+        b4Prong.fDecay = kBplustoD0pi;
+    }
+    if (IsInFiducialAcceptance(b4Prong.fPt, b4Prong.fY))
+        b4Prong.fSelBit |= kIsInFidAcc;
+
+    fBeauty4Prong.push_back(b4Prong);
 }
 
 //________________________________________________________________________

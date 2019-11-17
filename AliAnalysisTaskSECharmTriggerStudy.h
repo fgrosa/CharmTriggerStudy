@@ -105,9 +105,10 @@ struct CharmCascade
     int fSelBit;                        /// selection bit
 };
 
-struct Beauty2Prong
+struct Beauty3Prong
 {
     float fInvMassBplustoD0pi;
+    float fInvMassD0;
     Double32_t fPt;                     //[0.0,65.535,16]
     Double32_t fY;                      //[-1.023,1.023,11]
     Double32_t fCosP;                   //[0.67233000,1.,15]
@@ -121,6 +122,29 @@ struct Beauty2Prong
     Double32_t fDecayLengthD0;          //[0.0,6.5536,16]
     Double32_t fNormDecayLengthXYD0;    //[0.0,102.4,10]
     Double32_t fImpParProdD0;           //[-0.32768,0.32768,16]
+    int fGenLabel;                      /// label to match with MC
+    unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
+    unsigned char fDecay;               /// flag for decay channel
+    int fSelBit;                        /// selection bit
+};
+
+struct Beauty4Prong
+{
+    float fInvMassB0toDminuspi;
+    float fInvMassD;
+    Double32_t fPt;                     //[0.0,65.535,16]
+    Double32_t fY;                      //[-1.023,1.023,11]
+    Double32_t fCosP;                   //[0.67233000,1.,15]
+    Double32_t fCosPXY;                 //[0.67233000,1.,15]
+    Double32_t fDecayLength;            //[0.0,6.5536,16]
+    Double32_t fNormDecayLengthXY;      //[0.0,102.4,10]
+    Double32_t fImpParProd;             //[-0.32768,0.32768,16]
+    Double32_t fPtD;                    //[0.0,65.535,16]
+    Double32_t fCosPD;                  //[0.67233000,1.,15]
+    Double32_t fCosPXYD;                //[0.67233000,1.,15]
+    Double32_t fDecayLengthD;           //[0.0,6.5536,16]
+    Double32_t fNormDecayLengthXYD;     //[0.0,102.4,10]
+    Double32_t fSigmaVtxD;              //[0.0,0.08190,12]
     int fGenLabel;                      /// label to match with MC
     unsigned char fCandType;            /// flag for cand type (signal, bkg, reflected, prompt, FD)
     unsigned char fDecay;               /// flag for decay channel
@@ -164,7 +188,8 @@ public:
         kLctopiKp,
         kLctopK0s,
         kLctopiLambda,
-        kBplustoD0pi
+        kBplustoD0pi,
+        kB0toDminuspi
     };
 
     enum kSelBit
@@ -179,22 +204,24 @@ public:
         kLctopiKpCuts        = BIT(7),
         kLctoV0bachCuts      = BIT(8),
         kBplustoD0piCuts     = BIT(9),
-        kDzerotoKpiCutsPID   = BIT(10),
-        kDzerotopiKCutsPID   = BIT(11),
-        kDplustoKpipiCutsPID = BIT(12),
-        kDstartoKpipiCutsPID = BIT(13),
-        kDstoKKpiCutsPID     = BIT(14),
-        kDstopiKKCutsPID     = BIT(15),
-        kLctopKpiCutsPID     = BIT(16),
-        kLctopiKpCutsPID     = BIT(17),
-        kLctoV0bachCutsPID   = BIT(18),
-        kDzerotoKpiFidAcc    = BIT(19),
-        kDplustoKpipiFidAcc  = BIT(20),
-        kDstartoKpipiFidAcc  = BIT(21),
-        kDstoKKpiFidAcc      = BIT(22),
-        kLctopKpiFidAcc      = BIT(23),
-        kLctoV0bachFidAcc    = BIT(24),
-        kBplustoD0piFidAcc   = BIT(25)
+        kB0toDminuspiCuts    = BIT(10),
+        kDzerotoKpiCutsPID   = BIT(11),
+        kDzerotopiKCutsPID   = BIT(12),
+        kDplustoKpipiCutsPID = BIT(13),
+        kDstartoKpipiCutsPID = BIT(14),
+        kDstoKKpiCutsPID     = BIT(15),
+        kDstopiKKCutsPID     = BIT(16),
+        kLctopKpiCutsPID     = BIT(17),
+        kLctopiKpCutsPID     = BIT(18),
+        kLctoV0bachCutsPID   = BIT(19),
+        kDzerotoKpiFidAcc    = BIT(20),
+        kDplustoKpipiFidAcc  = BIT(21),
+        kDstartoKpipiFidAcc  = BIT(22),
+        kDstoKKpiFidAcc      = BIT(23),
+        kLctopKpiFidAcc      = BIT(24),
+        kLctoV0bachFidAcc    = BIT(25),
+        kBplustoD0piFidAcc   = BIT(26),
+        kB0toDminuspiFidAcc   = BIT(27)
     };
 
     enum kSystem
@@ -218,7 +245,8 @@ public:
                        bool enableLc = true)             {fEnable3Prongs = 0; if(enableDplus) fEnable3Prongs |= BIT(0); if(enableDs) fEnable3Prongs |= BIT(1); if(enableLc) fEnable3Prongs |= BIT(2);}
     void EnableDstars(bool enable = true)                {fEnableDstars = enable;}
     void EnableCascades(bool enable = true)              {fEnableCascades = enable;}
-    void EnableBplus(bool enable = true)                 {fEnableBplus = enable;}
+    void EnableBeauty3Prong(bool enable = true)          {fEnableBeauty3Prong = enable;}
+    void EnableBeauty4Prong(bool enableB0 = true)        {fEnableBeauty4Prong |= BIT(0);}
     void SetFillOnlySignal(bool fillonlysignal = true)   {fFillOnlySignal = fillonlysignal;}
 
     void SetSystem(int system = kpp)                     {fSystem = system;}
@@ -230,7 +258,8 @@ private:
     void FillCharm3Prong(AliAODRecoDecayHF3Prong* cand, bool isselDplus, int isselDs, int isselLc);
     void FillDstar(AliAODRecoCascadeHF* cand, AliAODRecoDecayHF2Prong* dau, bool issel);
     void FillCharmCascade(AliAODRecoCascadeHF* cand, AliAODv0* dau, int issel);
-    void FillBeauty2Prong(AliAODRecoDecayHF2Prong* cand, AliAODRecoDecayHF2Prong* dau, bool issel);
+    void FillBeauty3Prong(AliAODRecoDecayHF2Prong* cand, AliAODRecoDecayHF2Prong* dau, bool issel);
+    void FillBeauty4Prong(AliAODRecoDecayHF2Prong* cand, AliAODRecoDecayHF3Prong* dau, bool issel);
     void FillGenerated(AliAODMCParticle* part, int origin, int decay, bool aredauinacc);
     bool RecalcOwnPrimaryVertex(AliAODRecoDecayHF* cand);
     void CleanOwnPrimaryVertex(AliAODRecoDecayHF* cand, AliAODVertex* origvtx);
@@ -256,14 +285,16 @@ private:
     vector<Charm3Prong> fCharm3Prong;           /// vector of charm 3 prongs
     vector<Dstar> fDstar;                       /// vector of Dstar
     vector<CharmCascade> fCharmCascade;         /// vector of charm cascades
-    vector<Beauty2Prong> fBeauty2Prong;         /// vector of beauty 2 prongs
+    vector<Beauty3Prong> fBeauty3Prong;         /// vector of beauty 3 prongs
+    vector<Beauty4Prong> fBeauty4Prong;         /// vector of beauty 4 prongs
     vector<GenHadron> fGenHadron;               /// vector of generated charm/beauty hadrons
 
     bool fEnable2Prongs;                        /// flag to enable 2-prong branch
     int fEnable3Prongs;                         /// flag to enable 3-prong branch (with D+ and/or Ds+ and/or Lc)
     bool fEnableDstars;                         /// flag to enable Dstar branch
     bool fEnableCascades;                       /// flag to enable cascade branch
-    bool fEnableBplus;                          /// flag to enable B+
+    bool fEnableBeauty3Prong;                   /// flag to enable B+
+    int fEnableBeauty4Prong;                    /// flag to enable B0 / Bs / Lb
     bool fFillOnlySignal;                       /// flag to fill only signal
 
     AliRDHFCutsD0toKpi* fCutsD0toKpi;           /// cut object for D0->Kpi
