@@ -1317,8 +1317,9 @@ void AliAnalysisTaskSECharmTriggerStudy::FillBeauty3Prong(AliAODRecoDecayHF2Pron
         b3Prong.fCandType |= kPrompt; //beauty always prompt
         b3Prong.fDecay = kBplustoD0pi;
     }
+
     if (IsInFiducialAcceptance(b3Prong.fPt, b3Prong.fY))
-        b3Prong.fSelBit |= kIsInFidAcc;
+        b3Prong.fSelBit |= kBplustoD0piFidAcc;
 
     fBeauty3Prong.push_back(b3Prong);
 }
@@ -1369,8 +1370,9 @@ void AliAnalysisTaskSECharmTriggerStudy::FillBeauty4Prong(AliAODRecoDecayHF2Pron
         b4Prong.fCandType |= kPrompt; //beauty always prompt
         b4Prong.fDecay = kBplustoD0pi;
     }
+
     if (IsInFiducialAcceptance(b4Prong.fPt, b4Prong.fY))
-        b4Prong.fSelBit |= kIsInFidAcc;
+        b4Prong.fSelBit |= kB0toDminuspiFidAcc;
 
     fBeauty4Prong.push_back(b4Prong);
 }
