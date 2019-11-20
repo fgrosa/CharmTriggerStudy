@@ -524,7 +524,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if(pdgCode == 511 && fEnableBeauty4Prongs >> 0 & 1) //B0
             {
                 decay = AliVertexingHFUtils::CheckB0toDminuspiDecay(fMCArray, part, labDau);
-                if (decay != 1 || labDau[0] == -1 || labDau[1] < 0)
+                if (decay < 1 || labDau[0] == -1 || labDau[1] < 0)
                     continue;
 
                 dauInAcc = AreDauInAcc(3, labDau);
@@ -902,6 +902,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     fDstar.clear();
     fCharmCascade.clear();
     fBeauty3Prong.clear();
+    fBeauty4Prong.clear();
     fGenHadron.clear();
 
     PostData(1, fOutput);
