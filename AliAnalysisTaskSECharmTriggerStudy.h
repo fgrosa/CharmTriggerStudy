@@ -248,9 +248,11 @@ public:
     void EnableBeauty3Prongs(bool enable = true)         {fEnableBeauty3Prongs = enable;}
     void EnableBeauty4Prongs(bool enableB0 = true)       {fEnableBeauty4Prongs = 0; if(enableB0) fEnableBeauty4Prongs |= BIT(0);}
     void SetFillOnlySignal(bool fillonlysignal = true)   {fFillOnlySignal = fillonlysignal;}
+    void SetFillGenTree(bool fill = true)                {fFillGenTree = fill;}
 
     void SetSystem(int system = kpp)                     {fSystem = system;}
     void ApplyCuts(bool applycuts = true)                {fApplyCuts = applycuts;}
+    void SetReadMC(bool readMC = true)                   {fReadMC = readMC;}
 
 private:
 
@@ -296,6 +298,8 @@ private:
     bool fEnableBeauty3Prongs;                  /// flag to enable B+
     int fEnableBeauty4Prongs;                   /// flag to enable B0 / Bs / Lb
     bool fFillOnlySignal;                       /// flag to fill only signal
+    bool fFillGenTree;                          /// flag to fill tree with generated information
+    bool fReadMC;                               /// flag to read MC info (if MC production)
 
     AliRDHFCutsD0toKpi* fCutsD0toKpi;           /// cut object for D0->Kpi
     AliRDHFCutsDplustoKpipi* fCutsDplustoKpipi; /// cut object for D+->Kpipi

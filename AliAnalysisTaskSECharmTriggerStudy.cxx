@@ -74,6 +74,8 @@ AliAnalysisTaskSECharmTriggerStudy::AliAnalysisTaskSECharmTriggerStudy(const cha
                                                                                                            fEnableBeauty3Prongs(false),
                                                                                                            fEnableBeauty4Prongs(false),
                                                                                                            fFillOnlySignal(false),
+                                                                                                           fFillGenTree(true),
+                                                                                                           fReadMC(true),
                                                                                                            fCutsD0toKpi(nullptr),
                                                                                                            fCutsDplustoKpipi(nullptr),
                                                                                                            fCutsDstartoKpipi(nullptr),
@@ -199,8 +201,11 @@ void AliAnalysisTaskSECharmTriggerStudy::UserCreateOutputObjects()
         fRecoTree->Branch("Beauty4Prong", &fBeauty4Prong);
 
     fGenTree = new TTree("fGenTree", "Generate charm hadrons");
-    fGenTree->Branch("zVtxGen", &fGenZvtx);
-    fGenTree->Branch("GenHadron", &fGenHadron);
+    if(fReadMC && fFillGenTree)
+    {
+        fGenTree->Branch("zVtxGen", &fGenZvtx);
+        fGenTree->Branch("GenHadron", &fGenHadron);
+    }
 
     PostData(1, fOutput);
     PostData(2, fRecoTree);
@@ -371,22 +376,26 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
     fHistNEvents->Fill(6); // selected event
 
-    fMCArray = dynamic_cast<TClonesArray *>(fAOD->GetList()->FindObject(AliAODMCParticle::StdBranchName()));
-    if (!fMCArray)
+    AliAODMCHeader *mcHeader = nullptr;
+    if(fReadMC)
     {
-        AliWarning("MC particles branch not found!");
-        return;
-    }
+        fMCArray = dynamic_cast<TClonesArray *>(fAOD->GetList()->FindObject(AliAODMCParticle::StdBranchName()));
+        if (!fMCArray)
+        {
+            AliWarning("MC particles branch not found!");
+            return;
+        }
 
-    // load MC header
-    AliAODMCHeader *mcHeader = dynamic_cast<AliAODMCHeader *>(fAOD->GetList()->FindObject(AliAODMCHeader::StdBranchName()));
-    if (!mcHeader)
-    {
-        AliWarning("MC header branch not found!");
-        return;
-    }
+        // load MC header
+        mcHeader = dynamic_cast<AliAODMCHeader *>(fAOD->GetList()->FindObject(AliAODMCHeader::StdBranchName()));
+        if (!mcHeader)
+        {
+            AliWarning("MC header branch not found!");
+            return;
+        }
 
-    fGenZvtx = mcHeader->GetVtxZ();
+        fGenZvtx = mcHeader->GetVtxZ();
+    }
 
     AliAODVertex *primVtx = dynamic_cast<AliAODVertex *>(fAOD->GetPrimaryVertex());
     fRecoZvtx = primVtx->GetZ();
@@ -412,126 +421,131 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     }
 
     //loop on generated particles
-    for (int iPart = 0; iPart < fMCArray->GetEntriesFast(); iPart++)
+    if(fReadMC && fFillGenTree)
     {
-        AliAODMCParticle *part = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(iPart));
-        if (!part)
-            continue;
-
-        int pdgCode = TMath::Abs(part->GetPdgCode());
-        if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122 || pdgCode == 521 || pdgCode == 511)
+        for (int iPart = 0; iPart < fMCArray->GetEntriesFast(); iPart++)
         {
-            int origin = 4; //beauty assumed to be always prompt
-            if (pdgCode != 521)
-                origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part, true);
-            if (origin != 4 && origin != 5)
-                continue; //keep only prompt or feed-down
+            AliAODMCParticle *part = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(iPart));
+            if (!part)
+                continue;
 
-            int labDau[3] = {-1, -1, -1};
-            int pdgCodeDau0 = -1;
-            int decay = -1;
-            bool dauInAcc = false;
-            if (pdgCode == 421 && fEnable2Prongs) //Dzero
+            int pdgCode = TMath::Abs(part->GetPdgCode());
+            if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122 || pdgCode == 521 || pdgCode == 511)
             {
-                if (part->GetNDaughters() == 2)
-                    decay = AliVertexingHFUtils::CheckD0Decay(fMCArray, part, labDau);
-                if (decay != 1 || labDau[0] < 0 || labDau[1] < 0)
-                    continue;
-                dauInAcc = AreDauInAcc(2, labDau);
-                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                if (TMath::Abs(pdgCodeDau0) == 321)
-                    FillGenerated(part, origin, kDzerotoKpi, dauInAcc);
-                else
-                    FillGenerated(part, origin, kDzerotopiK, dauInAcc);
-            }
-            else if (pdgCode == 411 && fEnable3Prongs >> 0 & 1) //Dplus
-            {
-                decay = AliVertexingHFUtils::CheckDplusDecay(fMCArray, part, labDau);
-                if (decay >= 1 && labDau[0] >= 0 && labDau[1] >= 0)
+                int origin = 4; //beauty assumed to be always prompt
+                if (pdgCode != 521)
+                    origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part, true);
+                if (origin != 4 && origin != 5)
+                    continue; //keep only prompt or feed-down
+
+                int labDau[3] = {-1, -1, -1};
+                int pdgCodeDau0 = -1;
+                int decay = -1;
+                bool dauInAcc = false;
+                if (pdgCode == 421 && fEnable2Prongs) //Dzero
                 {
-                    FillGenerated(part, origin, kDplustoKpipi, dauInAcc);
-                    continue;
+                    if (part->GetNDaughters() == 2)
+                        decay = AliVertexingHFUtils::CheckD0Decay(fMCArray, part, labDau);
+                    if (decay != 1 || labDau[0] < 0 || labDau[1] < 0)
+                        continue;
+                    dauInAcc = AreDauInAcc(2, labDau);
+                    pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                    if (TMath::Abs(pdgCodeDau0) == 321)
+                        FillGenerated(part, origin, kDzerotoKpi, dauInAcc);
+                    else
+                        FillGenerated(part, origin, kDzerotopiK, dauInAcc);
                 }
-                decay = AliVertexingHFUtils::CheckDplusKKpiDecay(fMCArray, part, labDau);
-                if (decay != 1 && labDau[0] < 0 && labDau[1] < 0)
-                    continue;
-                dauInAcc = AreDauInAcc(3, labDau);
-
-                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                if (TMath::Abs(pdgCodeDau0) == 321)
-                    FillGenerated(part, origin, kDplustoKKpi, dauInAcc);
-                else
-                    FillGenerated(part, origin, kDplustopiKK, dauInAcc);
-            }
-            else if (pdgCode == 431 && fEnable3Prongs >> 1 & 1) //Ds
-            {
-                decay = AliVertexingHFUtils::CheckDsDecay(fMCArray, part, labDau);
-                if (decay != 1 || labDau[0] < 0 || labDau[1] < 0) //keep only Ds -> phipi --> KKpi (to be discussed)
-                    continue;
-                dauInAcc = AreDauInAcc(3, labDau);
-                pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                if (TMath::Abs(pdgCodeDau0) == 321)
-                    FillGenerated(part, origin, kDstoKKpi, dauInAcc);
-                else
-                    FillGenerated(part, origin, kDstopiKK, dauInAcc);
-            }
-            else if (pdgCode == 413 && fEnableDstars) //Dstar
-            {
-                decay = AliVertexingHFUtils::CheckDstarDecay(fMCArray, part, labDau);
-                if (decay != 1 || labDau[0] < 0 || labDau[1] < 0)
-                    continue;
-                dauInAcc = AreDauInAcc(3, labDau);
-                FillGenerated(part, origin, kDstartoKpipi, dauInAcc);
-            }
-            else if (pdgCode == 4122) //Lc
-            {
-                if (fEnable3Prongs >> 2 & 1)
+                else if (pdgCode == 411 && fEnable3Prongs >> 0 & 1) //Dplus
                 {
-                    decay = AliVertexingHFUtils::CheckLcpKpiDecay(fMCArray, part, labDau);
-                    dauInAcc = AreDauInAcc(3, labDau);
+                    decay = AliVertexingHFUtils::CheckDplusDecay(fMCArray, part, labDau);
                     if (decay >= 1 && labDau[0] >= 0 && labDau[1] >= 0)
                     {
-                        pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                        if (TMath::Abs(pdgCodeDau0) == 2212)
-                            FillGenerated(part, origin, kLctopKpi, dauInAcc);
-                        else
-                            FillGenerated(part, origin, kLctopiKp, dauInAcc);
+                        FillGenerated(part, origin, kDplustoKpipi, dauInAcc);
                         continue;
                     }
-                }
-                if (fEnableCascades)
-                {
-                    decay = AliVertexingHFUtils::CheckLcV0bachelorDecay(fMCArray, part, labDau);
+                    decay = AliVertexingHFUtils::CheckDplusKKpiDecay(fMCArray, part, labDau);
+                    if (decay != 1 && labDau[0] < 0 && labDau[1] < 0)
+                        continue;
                     dauInAcc = AreDauInAcc(3, labDau);
-                    if (labDau[0] >= 0 && labDau[1] >= 0)
+
+                    pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                    if (TMath::Abs(pdgCodeDau0) == 321)
+                        FillGenerated(part, origin, kDplustoKKpi, dauInAcc);
+                    else
+                        FillGenerated(part, origin, kDplustopiKK, dauInAcc);
+                }
+                else if (pdgCode == 431 && fEnable3Prongs >> 1 & 1) //Ds
+                {
+                    decay = AliVertexingHFUtils::CheckDsDecay(fMCArray, part, labDau);
+                    if (decay != 1 || labDau[0] < 0 || labDau[1] < 0) //keep only Ds -> phipi --> KKpi (to be discussed)
+                        continue;
+                    dauInAcc = AreDauInAcc(3, labDau);
+                    pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                    if (TMath::Abs(pdgCodeDau0) == 321)
+                        FillGenerated(part, origin, kDstoKKpi, dauInAcc);
+                    else
+                        FillGenerated(part, origin, kDstopiKK, dauInAcc);
+                }
+                else if (pdgCode == 413 && fEnableDstars) //Dstar
+                {
+                    decay = AliVertexingHFUtils::CheckDstarDecay(fMCArray, part, labDau);
+                    if (decay != 1 || labDau[0] < 0 || labDau[1] < 0)
+                        continue;
+                    dauInAcc = AreDauInAcc(3, labDau);
+                    FillGenerated(part, origin, kDstartoKpipi, dauInAcc);
+                }
+                else if (pdgCode == 4122) //Lc
+                {
+                    if (fEnable3Prongs >> 2 & 1)
                     {
-                        if (decay == 1)
-                            FillGenerated(part, origin, kLctopiLambda, dauInAcc);
-                        else if (decay == 2)
-                            FillGenerated(part, origin, kLctopK0s, dauInAcc);
+                        decay = AliVertexingHFUtils::CheckLcpKpiDecay(fMCArray, part, labDau);
+                        dauInAcc = AreDauInAcc(3, labDau);
+                        if (decay >= 1 && labDau[0] >= 0 && labDau[1] >= 0)
+                        {
+                            pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
+                            if (TMath::Abs(pdgCodeDau0) == 2212)
+                                FillGenerated(part, origin, kLctopKpi, dauInAcc);
+                            else
+                                FillGenerated(part, origin, kLctopiKp, dauInAcc);
+                            continue;
+                        }
+                    }
+                    if (fEnableCascades)
+                    {
+                        decay = AliVertexingHFUtils::CheckLcV0bachelorDecay(fMCArray, part, labDau);
+                        dauInAcc = AreDauInAcc(3, labDau);
+                        if (labDau[0] >= 0 && labDau[1] >= 0)
+                        {
+                            if (decay == 1)
+                                FillGenerated(part, origin, kLctopiLambda, dauInAcc);
+                            else if (decay == 2)
+                                FillGenerated(part, origin, kLctopK0s, dauInAcc);
+                        }
                     }
                 }
-            }
-            if (pdgCode == 521 && fEnableBeauty3Prongs) //Bplus
-            {
-                decay = AliVertexingHFUtils::CheckBplusDecay(fMCArray, part, labDau);
-                if (decay != 1 || labDau[0] == -1 || labDau[1] < 0)
-                    continue;
+                if (pdgCode == 521 && fEnableBeauty3Prongs) //Bplus
+                {
+                    decay = AliVertexingHFUtils::CheckBplusDecay(fMCArray, part, labDau);
+                    if (decay != 1 || labDau[0] == -1 || labDau[1] < 0)
+                        continue;
 
-                dauInAcc = AreDauInAcc(3, labDau);
-                FillGenerated(part, origin, kBplustoD0pi, dauInAcc);
-            }
-            if(pdgCode == 511 && fEnableBeauty4Prongs >> 0 & 1) //B0
-            {
-                decay = AliVertexingHFUtils::CheckB0toDminuspiDecay(fMCArray, part, labDau);
-                if (decay < 1 || labDau[0] == -1 || labDau[1] < 0)
-                    continue;
+                    dauInAcc = AreDauInAcc(3, labDau);
+                    FillGenerated(part, origin, kBplustoD0pi, dauInAcc);
+                }
+                if(pdgCode == 511 && fEnableBeauty4Prongs >> 0 & 1) //B0
+                {
+                    decay = AliVertexingHFUtils::CheckB0toDminuspiDecay(fMCArray, part, labDau);
+                    if (decay < 1 || labDau[0] == -1 || labDau[1] < 0)
+                        continue;
 
-                dauInAcc = AreDauInAcc(3, labDau);
-                FillGenerated(part, origin, kB0toDminuspi, dauInAcc);
+                    dauInAcc = AreDauInAcc(3, labDau);
+                    FillGenerated(part, origin, kB0toDminuspi, dauInAcc);
+                }
             }
         }
     }
+
+    AliAnalysisVertexingHF vHF;
 
     //loop on 2 prongs
     if (fEnable2Prongs || fEnableBeauty3Prongs)
@@ -542,6 +556,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             int issel = -1;
             if (d->HasSelectionBit(AliRDHFCuts::kD0toKpiCuts))
                 issel = 3;
+
+            if (!(vHF.FillRecoCand(fAOD, d)))
+                continue;
 
             if (fApplyCuts)
                 issel = fCutsD0toKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
@@ -668,6 +685,9 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             int isselLc = -1;
             if (d->HasSelectionBit(AliRDHFCuts::kLcCuts))
                 isselLc = 3;
+
+            if (!(vHF.FillRecoCand(fAOD, d)))
+                continue;
 
             if (fApplyCuts)
             {
@@ -799,6 +819,10 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
         {
             AliAODRecoCascadeHF *d = dynamic_cast<AliAODRecoCascadeHF *>(arrayDstar->UncheckedAt(iDstar));
             bool issel = d->HasSelectionBit(AliRDHFCuts::kDstarCuts);
+
+            if (!(vHF.FillRecoCand(fAOD, d)))
+                continue;
+
             if (fApplyCuts)
                 issel = fCutsDstartoKpipi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
 
@@ -854,6 +878,10 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             AliAODv0 *v0part = lc->Getv0();
             if (!v0part)
                 continue;
+
+            if (!(vHF.FillRecoCand(fAOD, lc)))
+                continue;
+
             int issel = 3;
             if (fApplyCuts)
                 issel = fCutsLctoV0bach->IsSelected(lc, AliRDHFCuts::kAll, fAOD);
@@ -895,7 +923,8 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
     }
 
     fRecoTree->Fill();
-    fGenTree->Fill();
+    if(fReadMC && fFillGenTree)
+        fGenTree->Fill();
 
     fCharm2Prong.clear();
     fCharm3Prong.clear();
@@ -938,45 +967,49 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm2Prong(AliAODRecoDecayHF2Prong
     if (fCutsD0toKpi->IsInFiducialAcceptance(ch2Prong.fPt, ch2Prong.fY))
         ch2Prong.fSelBit |= kDzerotoKpiFidAcc;
 
-    int pdgDgD0toKpi[2] = {321, 211};
-    ch2Prong.fGenLabel = cand->MatchToMC(421, fMCArray, 2, pdgDgD0toKpi);
-    ch2Prong.fDecay = kNone;
     ch2Prong.fCandType = 0;
-    int origin = -1;
-    if (ch2Prong.fGenLabel < 0)
-    {
-        ch2Prong.fCandType |= kBackground;
-        if (fFillOnlySignal)
-            return;
-    }
-    else
-    {
-        AliAODMCParticle *partD0 = dynamic_cast<AliAODMCParticle *>(fMCArray->At(ch2Prong.fGenLabel));
-        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
-        if (origin == 4)
-        {
-            ch2Prong.fCandType |= kSignal;
-            ch2Prong.fCandType |= kPrompt;
-        }
-        else if (origin == 5)
-        {
-            ch2Prong.fCandType |= kSignal;
-            ch2Prong.fCandType |= kFeedDown;
-        }
-        else
-        {
-            ch2Prong.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
-        }
+    ch2Prong.fGenLabel = -1;
+    ch2Prong.fDecay = kNone;
 
-        int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
-        AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
-        int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
-        if (pdgCode0 == 321)
-            ch2Prong.fDecay = kDzerotoKpi;
-        else if (pdgCode0 == 211)
-            ch2Prong.fDecay = kDzerotopiK;
+    if(fReadMC)
+    {
+        int pdgDgD0toKpi[2] = {321, 211};
+        ch2Prong.fGenLabel = cand->MatchToMC(421, fMCArray, 2, pdgDgD0toKpi);
+        ch2Prong.fDecay = kNone;
+        int origin = -1;
+        if (ch2Prong.fGenLabel < 0)
+        {
+            ch2Prong.fCandType |= kBackground;
+            if (fFillOnlySignal)
+                return;
+        }
         else
-            ch2Prong.fDecay = kNone;
+        {
+            AliAODMCParticle *partD0 = dynamic_cast<AliAODMCParticle *>(fMCArray->At(ch2Prong.fGenLabel));
+            origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partD0, true);
+            if (origin == 4)
+            {
+                ch2Prong.fCandType |= kSignal;
+                ch2Prong.fCandType |= kPrompt;
+            }
+            else if (origin == 5)
+            {
+                ch2Prong.fCandType |= kSignal;
+                ch2Prong.fCandType |= kFeedDown;
+            }
+            else
+            {
+                ch2Prong.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
+            }
+
+            int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
+            AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
+            int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
+            if (pdgCode0 == 321)
+                ch2Prong.fDecay = kDzerotoKpi;
+            else if (pdgCode0 == 211)
+                ch2Prong.fDecay = kDzerotopiK;
+        }
     }
 
     fCharm2Prong.push_back(ch2Prong);
@@ -1040,92 +1073,97 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharm3Prong(AliAODRecoDecayHF3Prong
             ch3Prong.fSelBit |= kLctopKpiFidAcc;
     }
 
-    int pdgDgDplustoKpipi[3] = {321, 211, 211};
-    int pdgDgDstoKKpi[3] = {321, 321, 211};
-    int pdgDgLctopKpi[3] = {2122, 321, 211};
-    int origin = -1;
+    ch3Prong.fCandType = 0;
     ch3Prong.fGenLabel = -1;
     ch3Prong.fDecay = kNone;
 
-    int labDplus = cand->MatchToMC(411, fMCArray, 3, pdgDgDplustoKpipi);
-    int labDs = -1;
-    int labDplustoKKpi = -1;
-    int labLc = -1;
-    if (labDplus < 0)
+    if(fReadMC)
     {
-        labDs = cand->MatchToMC(431, fMCArray, 3, pdgDgDstoKKpi);
-        if (labDs < 0)
-        {
-            labDplustoKKpi = cand->MatchToMC(411, fMCArray, 3, pdgDgDstoKKpi);
-            if (labDplustoKKpi < 0)
-            {
-                labLc = cand->MatchToMC(4122, fMCArray, 3, pdgDgLctopKpi);
-                if (labLc >= 0)
-                {
-                    ch3Prong.fGenLabel = labLc;
+        int pdgDgDplustoKpipi[3] = {321, 211, 211};
+        int pdgDgDstoKKpi[3] = {321, 321, 211};
+        int pdgDgLctopKpi[3] = {2122, 321, 211};
+        int origin = -1;
 
+        int labDplus = cand->MatchToMC(411, fMCArray, 3, pdgDgDplustoKpipi);
+        int labDs = -1;
+        int labDplustoKKpi = -1;
+        int labLc = -1;
+        if (labDplus < 0)
+        {
+            labDs = cand->MatchToMC(431, fMCArray, 3, pdgDgDstoKKpi);
+            if (labDs < 0)
+            {
+                labDplustoKKpi = cand->MatchToMC(411, fMCArray, 3, pdgDgDstoKKpi);
+                if (labDplustoKKpi < 0)
+                {
+                    labLc = cand->MatchToMC(4122, fMCArray, 3, pdgDgLctopKpi);
+                    if (labLc >= 0)
+                    {
+                        ch3Prong.fGenLabel = labLc;
+
+                        int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
+                        AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
+                        int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
+                        if (pdgCode0 == 2122)
+                            ch3Prong.fDecay = kLctopKpi;
+                        else if (pdgCode0 == 211)
+                            ch3Prong.fDecay = kLctopiKp;
+                    }
+                }
+                else
+                {
+                    ch3Prong.fGenLabel = labDplustoKKpi;
                     int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
                     AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
                     int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
-                    if (pdgCode0 == 2122)
-                        ch3Prong.fDecay = kLctopKpi;
+                    if (pdgCode0 == 321)
+                        ch3Prong.fDecay = kDplustoKKpi;
                     else if (pdgCode0 == 211)
-                        ch3Prong.fDecay = kLctopiKp;
+                        ch3Prong.fDecay = kDplustopiKK;
                 }
             }
             else
             {
-                ch3Prong.fGenLabel = labDplustoKKpi;
+                ch3Prong.fGenLabel = labDs;
                 int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
                 AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
                 int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
                 if (pdgCode0 == 321)
-                    ch3Prong.fDecay = kDplustoKKpi;
+                    ch3Prong.fDecay = kDstoKKpi;
                 else if (pdgCode0 == 211)
-                    ch3Prong.fDecay = kDplustopiKK;
+                    ch3Prong.fDecay = kDstopiKK;
             }
         }
         else
         {
-            ch3Prong.fGenLabel = labDs;
-            int labDau0 = dynamic_cast<AliAODTrack *>(cand->GetDaughter(0))->GetLabel();
-            AliAODMCParticle *dauPart0 = dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(TMath::Abs(labDau0)));
-            int pdgCode0 = TMath::Abs(dauPart0->GetPdgCode());
-            if (pdgCode0 == 321)
-                ch3Prong.fDecay = kDstoKKpi;
-            else if (pdgCode0 == 211)
-                ch3Prong.fDecay = kDstopiKK;
+            ch3Prong.fGenLabel = labDplus;
+            ch3Prong.fDecay = kDplustoKpipi;
         }
-    }
-    else
-    {
-        ch3Prong.fGenLabel = labDplus;
-        ch3Prong.fDecay = kDplustoKpipi;
-    }
 
-    if (ch3Prong.fGenLabel < 0)
-    {
-        ch3Prong.fCandType |= kBackground;
-        if (fFillOnlySignal)
-            return;
-    }
-    else
-    {
-        AliAODMCParticle *part3prong = dynamic_cast<AliAODMCParticle *>(fMCArray->At(ch3Prong.fGenLabel));
-        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part3prong, true);
-        if (origin == 4)
+        if (ch3Prong.fGenLabel < 0)
         {
-            ch3Prong.fCandType |= kSignal;
-            ch3Prong.fCandType |= kPrompt;
-        }
-        else if (origin == 5)
-        {
-            ch3Prong.fCandType |= kSignal;
-            ch3Prong.fCandType |= kFeedDown;
+            ch3Prong.fCandType |= kBackground;
+            if (fFillOnlySignal)
+                return;
         }
         else
         {
-            ch3Prong.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
+            AliAODMCParticle *part3prong = dynamic_cast<AliAODMCParticle *>(fMCArray->At(ch3Prong.fGenLabel));
+            origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part3prong, true);
+            if (origin == 4)
+            {
+                ch3Prong.fCandType |= kSignal;
+                ch3Prong.fCandType |= kPrompt;
+            }
+            else if (origin == 5)
+            {
+                ch3Prong.fCandType |= kSignal;
+                ch3Prong.fCandType |= kFeedDown;
+            }
+            else
+            {
+                ch3Prong.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
+            }
         }
     }
 
@@ -1153,37 +1191,42 @@ void AliAnalysisTaskSECharmTriggerStudy::FillDstar(AliAODRecoCascadeHF *cand, Al
     if (fCutsDstartoKpipi->IsInFiducialAcceptance(dstar.fPt, dstar.fY))
         dstar.fSelBit |= kDstartoKpipiFidAcc;
 
-    int pdgDgDstartoD0pi[3] = {421, 211};
-    int pdgDgD0toKpi[2] = {321, 211};
-    dstar.fGenLabel = cand->MatchToMC(413, 421, pdgDgDstartoD0pi, pdgDgD0toKpi, fMCArray);
     dstar.fDecay = kNone;
     dstar.fCandType = 0;
-    int origin = -1;
-    if (dstar.fGenLabel < 0)
+    dstar.fGenLabel = -1;
+
+    if(fReadMC)
     {
-        dstar.fCandType |= kBackground;
-        if (fFillOnlySignal)
-            return;
-    }
-    else
-    {
-        AliAODMCParticle *partDstar = dynamic_cast<AliAODMCParticle *>(fMCArray->At(dstar.fGenLabel));
-        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partDstar, true);
-        if (origin == 4)
+        int pdgDgDstartoD0pi[3] = {421, 211};
+        int pdgDgD0toKpi[2] = {321, 211};
+        dstar.fGenLabel = cand->MatchToMC(413, 421, pdgDgDstartoD0pi, pdgDgD0toKpi, fMCArray);
+        int origin = -1;
+        if (dstar.fGenLabel < 0)
         {
-            dstar.fCandType |= kSignal;
-            dstar.fCandType |= kPrompt;
-        }
-        else if (origin == 5)
-        {
-            dstar.fCandType |= kSignal;
-            dstar.fCandType |= kFeedDown;
+            dstar.fCandType |= kBackground;
+            if (fFillOnlySignal)
+                return;
         }
         else
         {
-            dstar.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
+            AliAODMCParticle *partDstar = dynamic_cast<AliAODMCParticle *>(fMCArray->At(dstar.fGenLabel));
+            origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partDstar, true);
+            if (origin == 4)
+            {
+                dstar.fCandType |= kSignal;
+                dstar.fCandType |= kPrompt;
+            }
+            else if (origin == 5)
+            {
+                dstar.fCandType |= kSignal;
+                dstar.fCandType |= kFeedDown;
+            }
+            else
+            {
+                dstar.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
+            }
+            dstar.fDecay = kDstartoKpipi;
         }
-        dstar.fDecay = kDstartoKpipi;
     }
 
     fDstar.push_back(dstar);
@@ -1214,55 +1257,60 @@ void AliAnalysisTaskSECharmTriggerStudy::FillCharmCascade(AliAODRecoCascadeHF *c
     if (fCutsDstartoKpipi->IsInFiducialAcceptance(chCasc.fPt, chCasc.fY))
         chCasc.fSelBit |= kLctoV0bachFidAcc;
 
-    int pdgDgLctopK0s[2] = {2212, 310};
-    int pdgDgLctopiLambda[2] = {211, 3122};
-    int pdgDgK0s[2] = {211, 211};
-    int pdgDgLambda[2] = {2122, 211};
 
     chCasc.fGenLabel = -1;
     chCasc.fDecay = kNone;
-    int labtoK0s = cand->MatchToMC(4122, 310, pdgDgLctopK0s, pdgDgK0s, fMCArray, true);
-    int labtoLambda = -1;
-    if (labtoK0s < 0)
-    {
-        labtoLambda = cand->MatchToMC(4122, 3122, pdgDgLctopiLambda, pdgDgLambda, fMCArray, true);
-        if (labtoLambda >= 0)
-        {
-            chCasc.fGenLabel = labtoLambda;
-            chCasc.fDecay = kLctopK0s;
-        }
-    }
-    else
-    {
-        chCasc.fGenLabel = labtoK0s;
-        chCasc.fDecay = kLctopiLambda;
-    }
-
     chCasc.fCandType = 0;
-    int origin = -1;
-    if (chCasc.fGenLabel < 0)
+
+    if(fReadMC)
     {
-        chCasc.fCandType |= kBackground;
-        if (fFillOnlySignal)
-            return;
-    }
-    else
-    {
-        AliAODMCParticle *partCasc = dynamic_cast<AliAODMCParticle *>(fMCArray->At(chCasc.fGenLabel));
-        origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partCasc, true);
-        if (origin == 4)
+        int pdgDgLctopK0s[2] = {2212, 310};
+        int pdgDgLctopiLambda[2] = {211, 3122};
+        int pdgDgK0s[2] = {211, 211};
+        int pdgDgLambda[2] = {2122, 211};
+
+        int labtoK0s = cand->MatchToMC(4122, 310, pdgDgLctopK0s, pdgDgK0s, fMCArray, true);
+        int labtoLambda = -1;
+        if (labtoK0s < 0)
         {
-            chCasc.fCandType |= kSignal;
-            chCasc.fCandType |= kPrompt;
-        }
-        else if (origin == 5)
-        {
-            chCasc.fCandType |= kSignal;
-            chCasc.fCandType |= kFeedDown;
+            labtoLambda = cand->MatchToMC(4122, 3122, pdgDgLctopiLambda, pdgDgLambda, fMCArray, true);
+            if (labtoLambda >= 0)
+            {
+                chCasc.fGenLabel = labtoLambda;
+                chCasc.fDecay = kLctopK0s;
+            }
         }
         else
         {
-            chCasc.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
+            chCasc.fGenLabel = labtoK0s;
+            chCasc.fDecay = kLctopiLambda;
+        }
+
+        int origin = -1;
+        if (chCasc.fGenLabel < 0)
+        {
+            chCasc.fCandType |= kBackground;
+            if (fFillOnlySignal)
+                return;
+        }
+        else
+        {
+            AliAODMCParticle *partCasc = dynamic_cast<AliAODMCParticle *>(fMCArray->At(chCasc.fGenLabel));
+            origin = AliVertexingHFUtils::CheckOrigin(fMCArray, partCasc, true);
+            if (origin == 4)
+            {
+                chCasc.fCandType |= kSignal;
+                chCasc.fCandType |= kPrompt;
+            }
+            else if (origin == 5)
+            {
+                chCasc.fCandType |= kSignal;
+                chCasc.fCandType |= kFeedDown;
+            }
+            else
+            {
+                chCasc.fCandType |= kSignal; // no prompt, no feed-down --> weird stuff
+            }
         }
     }
 
@@ -1303,24 +1351,29 @@ void AliAnalysisTaskSECharmTriggerStudy::FillBeauty3Prong(AliAODRecoDecayHF2Pron
     if (issel)
         b3Prong.fSelBit |= kBplustoD0piCuts;
 
-    b3Prong.fGenLabel = cand->MatchToMCB2Prong(521, 421, reinterpret_cast<int *>(pdgDgBplustoD0pi), pdgDgD0topiK, fMCArray);
     b3Prong.fDecay = kNone;
     b3Prong.fCandType = 0;
-    if (b3Prong.fGenLabel < 0)
-    {
-        b3Prong.fCandType |= kBackground;
-        if (fFillOnlySignal)
-            return;
-    }
-    else
-    {
-        b3Prong.fCandType |= kSignal;
-        b3Prong.fCandType |= kPrompt; //beauty always prompt
-        b3Prong.fDecay = kBplustoD0pi;
-    }
+    b3Prong.fGenLabel = -1;
 
-    if (IsInFiducialAcceptance(b3Prong.fPt, b3Prong.fY))
-        b3Prong.fSelBit |= kBplustoD0piFidAcc;
+    if(fReadMC)
+    {
+        b3Prong.fGenLabel = cand->MatchToMCB2Prong(521, 421, reinterpret_cast<int *>(pdgDgBplustoD0pi), pdgDgD0topiK, fMCArray);
+        if (b3Prong.fGenLabel < 0)
+        {
+            b3Prong.fCandType |= kBackground;
+            if (fFillOnlySignal)
+                return;
+        }
+        else
+        {
+            b3Prong.fCandType |= kSignal;
+            b3Prong.fCandType |= kPrompt; //beauty always prompt
+            b3Prong.fDecay = kBplustoD0pi;
+        }
+
+        if (IsInFiducialAcceptance(b3Prong.fPt, b3Prong.fY))
+            b3Prong.fSelBit |= kBplustoD0piFidAcc;
+    }
 
     fBeauty3Prong.push_back(b3Prong);
 }
@@ -1356,24 +1409,29 @@ void AliAnalysisTaskSECharmTriggerStudy::FillBeauty4Prong(AliAODRecoDecayHF2Pron
     if (issel)
         b4Prong.fSelBit |= kB0toDminuspiCuts;
 
-    b4Prong.fGenLabel = cand->MatchToMCB3Prong(511, 411, reinterpret_cast<int *>(pdgDgB0toDminuspi), pdgDgDplustopipiK, fMCArray);
     b4Prong.fDecay = kNone;
     b4Prong.fCandType = 0;
-    if (b4Prong.fGenLabel < 0)
-    {
-        b4Prong.fCandType |= kBackground;
-        if (fFillOnlySignal)
-            return;
-    }
-    else
-    {
-        b4Prong.fCandType |= kSignal;
-        b4Prong.fCandType |= kPrompt; //beauty always prompt
-        b4Prong.fDecay = kBplustoD0pi;
-    }
+    b4Prong.fGenLabel = -1;
 
-    if (IsInFiducialAcceptance(b4Prong.fPt, b4Prong.fY))
-        b4Prong.fSelBit |= kB0toDminuspiFidAcc;
+    if(fReadMC)
+    {
+        b4Prong.fGenLabel = cand->MatchToMCB3Prong(511, 411, reinterpret_cast<int *>(pdgDgB0toDminuspi), pdgDgDplustopipiK, fMCArray);
+        if (b4Prong.fGenLabel < 0)
+        {
+            b4Prong.fCandType |= kBackground;
+            if (fFillOnlySignal)
+                return;
+        }
+        else
+        {
+            b4Prong.fCandType |= kSignal;
+            b4Prong.fCandType |= kPrompt; //beauty always prompt
+            b4Prong.fDecay = kBplustoD0pi;
+        }
+
+        if (IsInFiducialAcceptance(b4Prong.fPt, b4Prong.fY))
+            b4Prong.fSelBit |= kB0toDminuspiFidAcc;
+    }
 
     fBeauty4Prong.push_back(b4Prong);
 }
