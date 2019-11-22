@@ -17,6 +17,7 @@
 #include "AliAnalysisTaskPIDResponse.h"
 #include "AliAnalysisTaskSEImproveITS3.h"
 #include "AliAnalysisTaskSECleanupVertexingHF.h"
+#include "AliAnalysisTaskSEDplus.h"
 
 #include "AliAnalysisTaskSECharmTriggerStudy.h"
 
@@ -161,7 +162,7 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
         alienHandler->SetExecutable("CharmTriggerStudy.sh");
 
         // specify how many seconds your job may take
-        alienHandler->SetTTL(30000);
+        alienHandler->SetTTL(15000);
         alienHandler->SetJDLName("CharmTriggerStudy.jdl");
 
         alienHandler->SetOutputToRunNo(true);

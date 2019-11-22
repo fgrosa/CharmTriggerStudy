@@ -736,6 +736,8 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             if (fEnableBeauty4Prongs)
             {
+                if(!isselDplus)
+                    continue;
                 for (int iTrack = 0; iTrack < fAOD->GetNumberOfTracks(); iTrack++)
                 {
                     AliAODTrack *track = dynamic_cast<AliAODTrack *>(fAOD->GetTrack(iTrack));
@@ -1426,7 +1428,7 @@ void AliAnalysisTaskSECharmTriggerStudy::FillBeauty4Prong(AliAODRecoDecayHF2Pron
         {
             b4Prong.fCandType |= kSignal;
             b4Prong.fCandType |= kPrompt; //beauty always prompt
-            b4Prong.fDecay = kBplustoD0pi;
+            b4Prong.fDecay = kB0toDminuspi;
         }
 
         if (IsInFiducialAcceptance(b4Prong.fPt, b4Prong.fY))
