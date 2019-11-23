@@ -564,7 +564,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!(vHF.FillRecoCand(fAOD, d)))
                 continue;
 
-            if (fApplyCuts)
+            if (fApplyCuts && issel > 0)
                 issel = fCutsD0toKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
             if (!d || !issel)
                 continue;
@@ -695,9 +695,12 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
             if (fApplyCuts)
             {
-                isselDplus = fCutsDplustoKpipi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
-                isselDs = fCutsDstoKKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
-                isselLc = fCutsLctopKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
+                if(isselDplus)
+                    isselDplus = fCutsDplustoKpipi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
+                if(isselDs > 0)
+                    isselDs = fCutsDstoKKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
+                if(isselLc > 0)
+                    isselLc = fCutsLctopKpi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
             }
 
             if (!d || (!isselDplus && !isselDs && !isselLc))
@@ -829,7 +832,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!(vHF.FillRecoCand(fAOD, d)))
                 continue;
 
-            if (fApplyCuts)
+            if (fApplyCuts && issel)
                 issel = fCutsDstartoKpipi->IsSelected(d, AliRDHFCuts::kAll, fAOD);
 
             if (!d || !issel)
@@ -885,13 +888,17 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (!v0part)
                 continue;
 
+            int issel = -1;
+            if(lc->HasSelectionBit(AliRDHFCuts::kLctoV0Cuts))
+                issel = 3;
+
             if (!(vHF.FillRecoCand(fAOD, lc)))
                 continue;
 
-            int issel = 3;
-            if (fApplyCuts)
+            if (fApplyCuts && issel > 0)
                 issel = fCutsLctoV0bach->IsSelected(lc, AliRDHFCuts::kAll, fAOD);
-            if (!issel)
+
+            if (issel)
                 continue;
 
             fHistNEvents->Fill(10);
