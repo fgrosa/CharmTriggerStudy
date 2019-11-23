@@ -221,7 +221,7 @@ public:
         kLctopKpiFidAcc      = BIT(24),
         kLctoV0bachFidAcc    = BIT(25),
         kBplustoD0piFidAcc   = BIT(26),
-        kB0toDminuspiFidAcc   = BIT(27)
+        kB0toDminuspiFidAcc  = BIT(27)
     };
 
     enum kSystem

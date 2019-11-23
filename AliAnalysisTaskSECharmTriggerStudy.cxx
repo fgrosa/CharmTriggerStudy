@@ -618,8 +618,8 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
                         // we calculate the vertex of the mother candidate
                         TObjArray BplusdauTracks;
-                        BplusdauTracks.Add(&piTrackParams);
-                        BplusdauTracks.Add(&DTrackParams);
+                        BplusdauTracks.Add(&piTrackParams); //first the pi
+                        BplusdauTracks.Add(&DTrackParams); //then the D
                         double dispersion = 0;
                         AliAODVertex *vertexBplus = ReconstructDisplVertex(fAOD->GetPrimaryVertex(), &BplusdauTracks, fAOD->GetMagneticField(), dispersion);
                         if (!vertexBplus)
@@ -761,8 +761,8 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
 
                         // we calculate the vertex of the mother candidate
                         TObjArray BdauTracks;
-                        BdauTracks.Add(&piTrackParams);
-                        BdauTracks.Add(&DTrackParams);
+                        BdauTracks.Add(&DTrackParams); //first the D
+                        BdauTracks.Add(&piTrackParams); // then the pi
                         double dispersion = 0;
                         AliAODVertex *vertexB = ReconstructDisplVertex(fAOD->GetPrimaryVertex(), &BdauTracks, fAOD->GetMagneticField(), dispersion);
                         if (!vertexB)
