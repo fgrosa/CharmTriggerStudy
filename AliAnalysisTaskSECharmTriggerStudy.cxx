@@ -433,7 +433,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
             if (pdgCode == 411 || pdgCode == 421 || pdgCode == 431 || pdgCode == 413 || pdgCode == 4122 || pdgCode == 521 || pdgCode == 511)
             {
                 int origin = 4; //beauty assumed to be always prompt
-                if (pdgCode != 521)
+                if (pdgCode != 521 && pdgCode != 511)
                     origin = AliVertexingHFUtils::CheckOrigin(fMCArray, part, true);
                 if (origin != 4 && origin != 5)
                     continue; //keep only prompt or feed-down
@@ -455,7 +455,7 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                     else
                         FillGenerated(part, origin, kDzerotopiK, dauInAcc);
                 }
-                else if (pdgCode == 411 && fEnable3Prongs >> 0 & 1) //Dplus
+                else if (pdgCode == 411 && fEnable3Prongs >> 0 & 1) //D+
                 {
                     decay = AliVertexingHFUtils::CheckDplusDecay(fMCArray, part, labDau);
                     if (decay >= 1 && labDau[0] >= 0 && labDau[1] >= 0)
@@ -463,28 +463,32 @@ void AliAnalysisTaskSECharmTriggerStudy::UserExec(Option_t * /*option*/)
                         FillGenerated(part, origin, kDplustoKpipi, dauInAcc);
                         continue;
                     }
-                    decay = AliVertexingHFUtils::CheckDplusKKpiDecay(fMCArray, part, labDau);
-                    if (decay != 1 && labDau[0] < 0 && labDau[1] < 0)
-                        continue;
-                    dauInAcc = AreDauInAcc(3, labDau);
-
-                    pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                    if (TMath::Abs(pdgCodeDau0) == 321)
-                        FillGenerated(part, origin, kDplustoKKpi, dauInAcc);
-                    else
-                        FillGenerated(part, origin, kDplustopiKK, dauInAcc);
                 }
-                else if (pdgCode == 431 && fEnable3Prongs >> 1 & 1) //Ds
+                else if ((pdgCode == 431 || pdgCode == 411) && fEnable3Prongs >> 1 & 1) //Ds (or D+ --> KKpi)
                 {
                     decay = AliVertexingHFUtils::CheckDsDecay(fMCArray, part, labDau);
-                    if (decay != 1 || labDau[0] < 0 || labDau[1] < 0) //keep only Ds -> phipi --> KKpi (to be discussed)
+                    int decayDplus = AliVertexingHFUtils::CheckDplusKKpiDecay(fMCArray, part, labDau);
+
+                    if (labDau[0] < 0 || labDau[1] < 0 || (decay != 1 && decayDplus!= 1)) //keep only Ds -> phipi --> KKpi (to be discussed)
                         continue;
+
                     dauInAcc = AreDauInAcc(3, labDau);
                     pdgCodeDau0 = (dynamic_cast<AliAODMCParticle *>(fMCArray->UncheckedAt(labDau[0])))->GetPdgCode();
-                    if (TMath::Abs(pdgCodeDau0) == 321)
-                        FillGenerated(part, origin, kDstoKKpi, dauInAcc);
-                    else
-                        FillGenerated(part, origin, kDstopiKK, dauInAcc);
+                    if(decay == 1)
+                    {
+                        if (TMath::Abs(pdgCodeDau0) == 321)
+                            FillGenerated(part, origin, kDstoKKpi, dauInAcc);
+                        else
+                            FillGenerated(part, origin, kDstopiKK, dauInAcc);
+                        continue;
+                    }
+                    if(decayDplus == 1)
+                    {
+                        if (TMath::Abs(pdgCodeDau0) == 321)
+                            FillGenerated(part, origin, kDplustoKKpi, dauInAcc);
+                        else
+                            FillGenerated(part, origin, kDplustopiKK, dauInAcc);
+                    }
                 }
                 else if (pdgCode == 413 && fEnableDstars) //Dstar
                 {
