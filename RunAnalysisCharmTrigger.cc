@@ -79,6 +79,16 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
     bool applyCuts = static_cast<bool>(config["cuts"]["applycuts"].as<int>());
     string cutFileName = config["cuts"]["cutfile"].as<string>();
 
+    bool writeonlysignal = static_cast<bool>(config["taskoptions"]["writeonlysignal"].as<int>());
+    bool enableD0 = static_cast<bool>(config["taskoptions"]["enableD0"].as<int>());
+    bool enableDplus = static_cast<bool>(config["taskoptions"]["enableDplus"].as<int>());
+    bool enableDs = static_cast<bool>(config["taskoptions"]["enableDs"].as<int>());
+    bool enableLc = static_cast<bool>(config["taskoptions"]["enableLc"].as<int>());
+    bool enableDstar = static_cast<bool>(config["taskoptions"]["enableDstar"].as<int>());
+    bool enableLc2V0 = static_cast<bool>(config["taskoptions"]["enableLc2V0"].as<int>());
+    bool enableBplus = static_cast<bool>(config["taskoptions"]["enableBplus"].as<int>());
+    bool enableB0 = static_cast<bool>(config["taskoptions"]["enableB0"].as<int>());
+
     // since we will compile a class, tell root where to look for headers
     gInterpreter->ProcessLine(".include $ROOTSYS/include");
     gInterpreter->ProcessLine(".include $ALICE_ROOT/include");
@@ -99,8 +109,7 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
         AliAnalysisTaskSEImproveITS3* taskimpr = reinterpret_cast<AliAnalysisTaskSEImproveITS3 *>(gInterpreter->ProcessLine(Form(".x %s(%d,\"%s\",\"%s\",%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/AddTaskImproverUpgrade.C"),false, resolCurrent.data(), resolUpgr.data(), 0)));
     }
 
-    gInterpreter->ProcessLine(".L AliAnalysisTaskSECharmTriggerStudy.cxx+g");
-    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,\"%s\",%d,\"%s\")", gSystem->ExpandPathName("AddTaskCharmTriggerStudy.C"), System, true, true, false, false, false, false, true, true, false, cutFileName.data(), applyCuts, "Signal")));
+    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,\"%s\",%d,\"%s\")", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/AddTaskCharmTriggerStudy.C"), System, enableD0, enableDplus, enableDs, enableLc, enableDstar, enableLc2V0, enableBplus, enableB0, writeonlysignal, cutFileName.data(), applyCuts, "Signal")));
 
     if(System==AliAnalysisTaskSECharmTriggerStudy::kPbPb) {
         AliAnalysisTaskSECleanupVertexingHF *taskclean =reinterpret_cast<AliAnalysisTaskSECleanupVertexingHF *>(gInterpreter->ProcessLine(Form(".x %s", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskCleanupVertexingHF.C"))));
