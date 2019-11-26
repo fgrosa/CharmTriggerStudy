@@ -1,0 +1,17 @@
+signal:
+    inputfile: Signal_2Prong_3Prong_pp13TeV_LHC18l4b_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_Signal
+background:
+    inputfile: SignalAndBkg_2Prong_3Prong_pp13TeV_LHC18h1_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_SignalAndBackground
+
+ptmin: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16]
+ptmax: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
+
+varstodraw: [fInvMassDstoKKpi, fPt, fCosP, fCosPXY, fDecayLength, fDecayLengthXY, fNormDecayLengthXY, fSigmaVtx]
+
+genbranch: GenCharmHadron
+seldecays: [4, 5]
+recobranch: Charm3Prong
+recoselbits: [4, 5]
+fidaccbit: 21

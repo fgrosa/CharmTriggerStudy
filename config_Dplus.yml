@@ -1,0 +1,37 @@
+signal:
+    inputfile: D0_Bplus_pp13TeV_LHC18l4b_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_Signal
+background:
+    inputfile: D0_Bplus_pp13TeV_LHC18l4b_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_Signal
+
+ptmin: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16]
+ptmax: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
+
+output:
+    directory: Dplus
+
+varstodraw: [fInvMassDplus, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fSigmaVtx]
+varmins: [1.6, 0., 0.8, 0.8, 0., 0., 0.]
+varmaxs: [2.1, 24., 1., 1., 1., 40., 0.06]
+
+genbranch: GenHadron
+seldecays: [3]
+massnames: [fInvMassDplus]
+recobranch: Charm3Prong
+recoselbits: [2]
+fidaccbit: 21
+
+applysel:
+    doapplysel: False
+    selections:
+      fPt:
+          min: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16]
+          max: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
+
+model: models/FONLL-D0-pp14TeV-y05-measbins.txt #pb
+BR: 0.0898
+fragfrac: 0.42
+luminosity: 0.0200 #pb-1
+sigmaMB: 57800000000 #pb
+fprompt: 0.9 #approximation, to be changed

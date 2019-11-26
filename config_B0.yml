@@ -1,0 +1,52 @@
+signal:
+    inputfile: D0_Bplus_pp13TeV_LHC18l4b_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_Signal
+background:
+    inputfile: D0_Bplus_pp13TeV_LHC18l4b_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_Signal
+
+output:
+    directory: B0
+
+ptmin: [0, 2, 4, 6, 8]
+ptmax: [2, 4, 6, 8, 12]
+
+varstodraw: [fInvMassB0toDminuspi, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fSigmaVtxD, fPtD, fInvMassD, fNormDecayLengthXYD]
+varmins: [4.8, 0., 0.9, 0.9, 0., 0., 0., 0., 1.6, 0.]
+varmaxs: [5.6, 12., 1., 1., 1., 40., 0.06, 20., 2.1, 40.]
+
+genbranch: GenHadron
+seldecays: [14]
+massnames: [fInvMassB0toDminuspi]
+recobranch: Beauty4Prong
+recoselbits: [10]
+fidaccbit: 27
+
+applysel:
+    doapplysel: False
+    selections:
+      fPt:
+          min: [0, 2, 4, 6, 8]
+          max: [2, 4, 6, 8, 12]
+      fCosPXY:
+          min: [0.995, 0.999, 0.999, 0.999, 0.999]
+          max: [1.00, 1.00, 1.00, 1.00, 1.00]
+      fImpParProd:
+          min: [-1., -1., -1., -1., -1.]
+          max: [-0.002, -0.002, 0., 0., 0.]
+      fNormDecayLengthXYD0:
+          min: [5., 10., 10., 10., 10.]
+          max: [1000., 1000., 1000., 1000., 1000.]
+      fNormDecayLengthXY:
+          min: [2., 2., 5., 5., 5.]
+          max: [1000., 1000., 1000., 1000., 1000.]
+      fInvMassD0:
+          min: [1.83, 1.83, 1.83, 1.83, 1.83]
+          max: [1.91, 1.91, 1.91, 1.91, 1.91]
+
+model: models/FONLL-B-pp14TeV-y05-widebins.txt #pb
+BR: 0.000226296
+fragfrac: 0.41
+luminosity: 200 #pb-1
+sigmaMB: 57800000000 #pb
+fprompt: 1.
