@@ -35,15 +35,24 @@ fPrompt = cfg['fprompt']
 model = cfg['model']
 dfModel = pd.read_csv(model, sep=' ')
 effAccHisto = uproot.open('{0}/Efficiency.root'.format(indir))['hEffAccPrompt']
+effAccUncHisto = uproot.open('{0}/Efficiency.root'.format(indir))['hEffAccUncPrompt']
 
 expSgn, expSgnMin, expSgnMax = [], [], []
-for (ptMin, ptMax, effAcc, crossSec, crossSecMin, crossSecMax) in zip(\
-    ptmins, ptmaxs, effAccHisto.values, dfModel['central'].values, dfModel['min'].values, dfModel['max'].values):
+expSgnUnc, expSgnUncMin, expSgnUncMax = [], [], []
+for (ptMin, ptMax, effAcc, effAccUnc, crossSec, crossSecMin, crossSecMax) in zip(\
+    ptmins, ptmaxs, effAccHisto.values, effAccUncHisto.values, \
+        dfModel['central'].values,  dfModel['min'].values, dfModel['max'].values):
     #cross section already multiplied by DeltaPt
     expSgn.append(computeExpSignal(0, 1, -0.5, 0.5, crossSec, effAcc, intLumi, BR, fF, fPrompt))
     expSgnMin.append(computeExpSignal(0, 1, -0.5, 0.5, crossSecMin, effAcc, intLumi, BR, fF, fPrompt))
     expSgnMax.append(computeExpSignal(0, 1, -0.5, 0.5, crossSecMax, effAcc, intLumi, BR, fF, fPrompt))
+    expSgnUnc.append(expSgn[-1]*effAcc)
+    expSgnUncMin.append(expSgnMin[-1]*effAccUnc/effAcc)
+    expSgnUncMax.append(expSgnMax[-1]*effAccUnc/effAcc)
 
-writeTH1('{0}/Signal.root'.format(indir), 'hSignal', ptlims, expSgn, None, True)
-writeTH1('{0}/Signal.root'.format(indir), 'hSignalMin', ptlims, expSgnMin, None, False)
-writeTH1('{0}/Signal.root'.format(indir), 'hSignalMax', ptlims, expSgnMax, None, False)
+writeTH1('{0}/Signal.root'.format(indir), 'hSignal', ptlims, expSgn, expSgnUnc, True)
+writeTH1('{0}/Signal.root'.format(indir), 'hSignalMin', ptlims, expSgnMin, expSgnUncMin, False)
+writeTH1('{0}/Signal.root'.format(indir), 'hSignalMax', ptlims, expSgnMax, expSgnUncMax, False)
+writeTH1('{0}/Signal.root'.format(indir), 'hSignalUnc', ptlims, expSgnUnc, None, False)
+writeTH1('{0}/Signal.root'.format(indir), 'hSignalUncMin', ptlims, expSgnUncMin, None, False)
+writeTH1('{0}/Signal.root'.format(indir), 'hSignalUncMax', ptlims, expSgnUncMax, None, False)

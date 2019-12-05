@@ -78,3 +78,10 @@ writeTH1('{0}/Efficiency.root'.format(indir), 'hEffPrompt', ptlims, effPrompt, e
 writeTH1('{0}/Efficiency.root'.format(indir), 'hEffFD', ptlims, effFD, effFDUnc, False)
 writeTH1('{0}/Efficiency.root'.format(indir), 'hAccPrompt', ptlims, accPrompt, effAccPromptUnc, False)
 writeTH1('{0}/Efficiency.root'.format(indir), 'hAccFD', ptlims, accFD, effAccFDUnc, False)
+
+writeTH1('{0}/Efficiency.root'.format(indir), 'hEffAccUncPrompt', ptlims, effAccPromptUnc, None, False)
+writeTH1('{0}/Efficiency.root'.format(indir), 'hEffAccUncFD', ptlims, effAccFDUnc, None, False)
+writeTH1('{0}/Efficiency.root'.format(indir), 'hEffUncPrompt', ptlims, effPromptUnc, None, False)
+writeTH1('{0}/Efficiency.root'.format(indir), 'hEffUncFD', ptlims, effFDUnc, None, False)
+writeTH1('{0}/Efficiency.root'.format(indir), 'hAccUncPrompt', ptlims, effAccPromptUnc, None, False)
+writeTH1('{0}/Efficiency.root'.format(indir), 'hAccUncFD', ptlims, effAccFDUnc, None, False)

@@ -61,8 +61,19 @@ if cfg['applysel']['doapplysel']:
 
 expBkg, expBkgUnc = [], []
 for mean, sigma, ptMin, ptMax in zip(meanList, sigmaList, ptmins, ptmaxs):
-    dfBkgSel = dfBkg.query('{0} < fPt < {1} & {2} < InvMass < {3}'.format(ptMin, ptMax, mean-3*sigma, mean+3*sigma))
-    expBkg.append(len(dfBkgSel) / nEv * nExpEv)
-    expBkgUnc.append(np.sqrt(expBkg[-1]))
+    dfBkgSel = dfBkg.query('{0} < fPt < {1}'.format(ptMin, ptMax))
+    massBkgHist, massBkgBins = np.histogram(dfBkgSel['InvMass'], bins=100)
+    hMassBkg = TH1F('hMassBkg', '', len(massBkgBins[:-1]), massBkgBins)
+    for iBin, counts in enumerate(massBkgHist):
+        hMassBkg.SetBinContent(iBin+1, counts)
+        hMassBkg.SetBinError(iBin+1, np.sqrt(counts))    
+    funcBkgMass = TF1('funcBkgMass', 'pol1', 0., 10.)
+    hMassBkg.Fit('funcBkgMass', 'Q0L')
+    bkg = funcBkgMass.Integral(mean-3*sigma, mean+3*sigma)/hMassBkg.GetBinWidth(1)
+    bkgrelunc = funcBkgMass.IntegralError(mean-3*sigma, mean+3*sigma)/hMassBkg.GetBinWidth(1)/bkg
+    expBkg.append(bkg / nEv * nExpEv)
+    expBkgUnc.append(expBkg[-1] * bkgrelunc)
+    del hMassBkg
 
 writeTH1('{0}/Background.root'.format(indir), 'hBkg3Sigma', ptlims, expBkg, expBkgUnc, True)
+writeTH1('{0}/Background.root'.format(indir), 'hBkgUnc3Sigma', ptlims, expBkgUnc, None, False)
