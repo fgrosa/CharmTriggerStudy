@@ -8,6 +8,7 @@ import argparse
 import pandas as pd
 import uproot
 import yaml
+import pyarrow as pa
 from dfUtils import filterBitDf, flatColumnNames
 
 
@@ -23,7 +24,7 @@ def divideInChunks(nEv, nEvPerChunk):
 
 parser = argparse.ArgumentParser(description='Arguments')
 parser.add_argument('configfile', metavar='text', default='config.yml',
-                    help='input root file name')
+                    help='input yaml config name')
 parser.add_argument('--nevperchunk', type=int, default=1000000, \
     help='number of events per chunk')
 parser.add_argument('--convertgen', default=True, action='store_true', \
@@ -67,8 +68,6 @@ if args.convertgen:
     print('Time elapsed to convert gen tree: ', time.time()-startTimeGen)
     startTimeGen = time.time()
 
-    dfGenChunkPromptSelAcc, dfGenChunkFDSelAcc = [], []
-    dfGenChunkPromptSelLimAcc, dfGenChunkFDSelLimAcc = [], []
     for iChunk, _ in enumerate(chunksGen):
         dfGenChunk = pd.read_parquet('{0}/dfGen_chunk{1}.parquet'.format(outdir, iChunk))
         dfGenChunk = dfGenChunk.query('abs(zVtxGen) < 10 & {0} > 0'.format(genBranch))
@@ -76,37 +75,35 @@ if args.convertgen:
 
         dfGenChunkPrompt = filterBitDf(dfGenChunk, 'fCandType', [2])
         dfGenChunkFD = filterBitDf(dfGenChunk, 'fCandType', [3])
+
+        print('process chunk number', iChunk)
         for decay in selDecays:
             dfGenChunkPromptSel = dfGenChunkPrompt.query('fDecay == {0}'.format(decay))
             dfGenChunkFDSel = dfGenChunkFD.query('fDecay == {0}'.format(decay))
 
-            dfGenChunkPromptSelAcc.append(dfGenChunkPromptSel.query('abs(fY) < 0.5'))
-            dfGenChunkFDSelAcc.append(dfGenChunkFDSel.query('abs(fY) < 0.5'))
+            # Create a parquet table from your dataframe
+            tbGenPromptSelAcc = pa.Table.from_pandas(dfGenChunkPromptSel.query('abs(fY) < 0.5'))
+            tbGenFDSelAcc = pa.Table.from_pandas(dfGenChunkFDSel.query('abs(fY) < 0.5'))
+            tbGenPromptSelLimAcc = pa.Table.from_pandas(filterBitDf(dfGenChunkPromptSel, 'fCandType', [4, 5], 'and'))
+            tbGenFDSelLimAcc = pa.Table.from_pandas(filterBitDf(dfGenChunkFDSel, 'fCandType', [4, 5], 'and'))
 
-            dfGenChunkPromptSelLimAcc.append(filterBitDf(dfGenChunkPromptSel, 'fCandType', [4, 5], 'and'))
-            dfGenChunkFDSelLimAcc.append(filterBitDf(dfGenChunkFDSel, 'fCandType', [4, 5], 'and'))
+            # Write direct to your parquet file
+            pa.parquet.write_to_dataset(tbGenPromptSelAcc, root_path='{0}/GenAccPrompt.parquet.gzip'.format(outdir), \
+                compression='gzip')
+            pa.parquet.write_to_dataset(tbGenFDSelAcc, root_path='{0}/GenAccFD.parquet.gzip'.format(outdir), \
+                compression='gzip')
+            pa.parquet.write_to_dataset(tbGenPromptSelLimAcc, root_path='{0}/GenLimAccPrompt.parquet.gzip'.format(outdir), \
+                compression='gzip')
+            pa.parquet.write_to_dataset(tbGenFDSelLimAcc, root_path='{0}/GenLimAccFD.parquet.gzip'.format(outdir), \
+                compression='gzip')
 
             del dfGenChunkPromptSel, dfGenChunkFDSel
 
         del dfGenChunk, dfGenChunkPrompt, dfGenChunkFD
 
-    dfGenPromptSelAcc = pd.concat(dfGenChunkPromptSelAcc, ignore_index=True)
-    dfGenFDSelAcc = pd.concat(dfGenChunkFDSelAcc, ignore_index=True)
-    dfGenPromptSelLimAcc = pd.concat(dfGenChunkPromptSelLimAcc, ignore_index=True)
-    dfGenFDSelLimAcc = pd.concat(dfGenChunkFDSelLimAcc, ignore_index=True)
-
-    del dfGenChunkPromptSelAcc, dfGenChunkFDSelAcc, dfGenChunkPromptSelLimAcc, dfGenChunkFDSelLimAcc
-
     if args.removepartial:
         for iChunk, _ in enumerate(chunksGen):
             os.remove('{0}/dfGen_chunk{1}.parquet'.format(outdir, iChunk))
-
-    dfGenPromptSelAcc.to_parquet('{0}/GenAccPrompt.parquet.gzip'.format(outdir), compression='gzip')
-    dfGenFDSelAcc.to_parquet('{0}/GenAccFD.parquet.gzip'.format(outdir), compression='gzip')
-    dfGenPromptSelLimAcc.to_parquet('{0}/GenLimAccPrompt.parquet.gzip'.format(outdir), compression='gzip')
-    dfGenFDSelLimAcc.to_parquet('{0}/GenLimAccFD.parquet.gzip'.format(outdir), compression='gzip')
-
-    del dfGenPromptSelAcc, dfGenFDSelAcc, dfGenPromptSelLimAcc, dfGenFDSelLimAcc
 
     print('Time elapsed to filter gen tree: ', time.time()-startTimeGen)
 
@@ -128,7 +125,6 @@ if args.convertrecosignal:
     print('Time elapsed to convert reco signal tree: ', time.time()-startTimeReco)
     startTimeReco = time.time()
 
-    dfRecoChunkPromptSelFidAcc, dfRecoChunkFDSelFidAcc = [], []
     for iChunk, _ in enumerate(chunksReco):
         dfRecoChunk = pd.read_parquet('{0}/dfReco_chunk{1}.parquet'.format(outdir, iChunk))
         dfRecoChunk = dfRecoChunk.query('abs(zVtxReco) < 10 & {0} > 0'.format(recoBranch))
@@ -137,6 +133,7 @@ if args.convertrecosignal:
         dfRecoChunkPrompt = filterBitDf(dfRecoChunk, 'fCandType', [2])
         dfRecoChunkFD = filterBitDf(dfRecoChunk, 'fCandType', [3])
 
+        print('process chunk number', iChunk)
         for recoSelBit, decay, massName in zip(recoSelBits, selDecays, massNames):
             dfRecoChunkPromptSel = dfRecoChunkPrompt.query('fDecay == {0}'.format(decay))
             dfRecoChunkFDSel = dfRecoChunkFD.query('fDecay == {0}'.format(decay))
@@ -144,26 +141,23 @@ if args.convertrecosignal:
             dfRecoChunkPromptSel['InvMass'] = dfRecoChunkPromptSel[massName]
             dfRecoChunkFDSel['InvMass'] = dfRecoChunkFDSel[massName]
 
-            dfRecoChunkPromptSelFidAcc.append(filterBitDf(dfRecoChunkPromptSel, 'fSelBit', [recoSelBit], 'and'))
-            dfRecoChunkFDSelFidAcc.append(filterBitDf(dfRecoChunkFDSel, 'fSelBit', [recoSelBit], 'and'))
+            # Create a parquet table from your dataframe
+            tbRecoPromptSelFidAcc = pa.Table.from_pandas(filterBitDf(dfRecoChunkPromptSel, 'fSelBit', [recoSelBit, fidAccBit], 'and'))
+            tbRecoFDSelFidAcc = pa.Table.from_pandas(filterBitDf(dfRecoChunkFDSel, 'fSelBit', [recoSelBit, fidAccBit], 'and'))
+
+            # Write direct to your parquet file
+            pa.parquet.write_to_dataset(tbRecoPromptSelFidAcc, root_path='{0}/RecoPrompt.parquet.gzip'.format(outdir), \
+                compression='gzip')
+            pa.parquet.write_to_dataset(tbRecoFDSelFidAcc, root_path='{0}/RecoFD.parquet.gzip'.format(outdir), \
+                compression='gzip')
 
             del dfRecoChunkPromptSel, dfRecoChunkFDSel
 
         del dfRecoChunk, dfRecoChunkPrompt, dfRecoChunkFD
 
-    dfRecoPromptSelFidAcc = pd.concat(dfRecoChunkPromptSelFidAcc, ignore_index=True)
-    dfRecoFDSelFidAcc = pd.concat(dfRecoChunkFDSelFidAcc, ignore_index=True)
-
-    del dfRecoChunkPromptSelFidAcc, dfRecoChunkFDSelFidAcc
-
     if args.removepartial:
         for iChunk, _ in enumerate(chunksReco):
             os.remove('{0}/dfReco_chunk{1}.parquet'.format(outdir, iChunk))
-
-    dfRecoPromptSelFidAcc.to_parquet('{0}/RecoPrompt.parquet.gzip'.format(outdir), compression='gzip')
-    dfRecoFDSelFidAcc.to_parquet('{0}/RecoFD.parquet.gzip'.format(outdir), compression='gzip')
-
-    del dfRecoPromptSelFidAcc, dfRecoFDSelFidAcc
 
     print('Time elapsed to filter reco signal tree: ', time.time()-startTimeReco)
     print('Reco signal saved.')
@@ -186,35 +180,33 @@ if args.convertrecobkg:
     print('Time elapsed to convert reco bkg tree: ', time.time()-startTimeReco)
     startTimeReco = time.time()
 
-    dfRecoChunkBkgSelFidAcc = []
+    dfRecoBkgSelFidAcc = []
     for iChunk, _ in enumerate(chunksReco):
         dfRecoChunkBkg = pd.read_parquet('{0}/dfRecoBkg_chunk{1}.parquet'.format(outdir, iChunk))
         dfRecoChunkBkg = dfRecoChunkBkg.query('abs(zVtxReco) < 10 & {0} > 0'.format(recoBranch))
         flatColumnNames(dfRecoChunkBkg, recoBranch)
-        dfRecoChunkBkgSel = filterBitDf(dfRecoChunkBkg, 'fCandType', [1])
+        dfRecoChunkBkg = filterBitDf(dfRecoChunkBkg, 'fCandType', [1])
 
+        print('process chunk number', iChunk)
         for recoSelBit, massName in zip(recoSelBits, massNames):
 
-            dfRecoChunkBkgSel = filterBitDf(dfRecoChunkBkgSel, 'fSelBit', [recoSelBit], 'and')
+            dfRecoChunkBkgSel = filterBitDf(dfRecoChunkBkg, 'fSelBit', [recoSelBit, fidAccBit], 'and')
 
             dfRecoChunkBkgSel['InvMass'] = dfRecoChunkBkgSel[massName]
-            dfRecoChunkBkgSelFidAcc.append(dfRecoChunkBkgSel)
+
+            # Create a parquet table from your dataframe
+            tbRecoBkgSelFidAcc = pa.Table.from_pandas(dfRecoChunkBkgSel)
+            # Write direct to your parquet file
+            pa.parquet.write_to_dataset(tbRecoBkgSelFidAcc, root_path='{0}/RecoBkg.parquet.gzip'.format(outdir), \
+                compression='gzip')
 
             del dfRecoChunkBkgSel
 
         del dfRecoChunkBkg
 
-    dfRecoBkgSelFidAcc = pd.concat(dfRecoChunkBkgSelFidAcc, ignore_index=True)
-
-    del dfRecoChunkBkgSelFidAcc
-
     if args.removepartial:
         for iChunk, _ in enumerate(chunksReco):
             os.remove('{0}/dfRecoBkg_chunk{1}.parquet'.format(outdir, iChunk))
-
-    dfRecoBkgSelFidAcc.to_parquet('{0}/RecoBkg.parquet.gzip'.format(outdir), compression='gzip')
-
-    del dfRecoBkgSelFidAcc
 
     print('Time elapsed to filter reco bkg tree: ', time.time()-startTimeReco)
     print('Reco bkg saved.')

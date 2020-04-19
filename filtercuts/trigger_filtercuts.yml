@@ -1,0 +1,16 @@
+infile: 
+    path: data/2Prong_3Prong_FilteringSel_LHC18j4_improved.root
+    dir: PWGHF_D2H_CharmTrigger_GenPurpose
+outfile: filtercuts/TriggeredEvents_Filtering.root
+
+nevents: 20000000
+
+ptthresholds: [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 12., 15.]
+
+applyPID: 0
+applycuts: 0
+
+cuts2Prong: null
+
+cuts3Prong: null
+    

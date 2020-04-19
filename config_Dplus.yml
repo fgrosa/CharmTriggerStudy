@@ -1,9 +1,9 @@
 signal:
-    inputfile: D0_Bplus_pp13TeV_LHC18l4b_improved.root
-    inputdir: PWGHF_D2H_CharmTrigger_Signal
+    inputfile: data/2Prong_3Prong_FilteringSel_LHC18l4b_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_GenPurpose
 background:
-    inputfile: D0_Bplus_pp13TeV_LHC18l4b_improved.root
-    inputdir: PWGHF_D2H_CharmTrigger_Signal
+    inputfile: data/2Prong_3Prong_FilteringSel_LHC18j4_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger_GenPurpose
 
 ptmin: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16]
 ptmax: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
@@ -11,27 +11,45 @@ ptmax: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
 output:
     directory: Dplus
 
-varstodraw: [fInvMassDplus, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fSigmaVtx]
-varmins: [1.6, 0., 0.8, 0.8, 0., 0., 0.]
-varmaxs: [2.1, 24., 1., 1., 1., 40., 0.06]
+varstodraw: [InvMass, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fSigmaVtx, fPtMinDau, fd0MinDau]
+varmins: [1.6, 0., 0.8, 0.8, 0., 0., 0., 0, 0.]
+varmaxs: [2.1, 24., 1., 1., 1., 40., 0.06, 2., 0.01]
 
 genbranch: GenHadron
 seldecays: [3]
 massnames: [fInvMassDplus]
 recobranch: Charm3Prong
 recoselbits: [2]
-fidaccbit: 21
+fidaccbit: 23
 
 applysel:
-    doapplysel: False
+    doapplysel: True
     selections:
-      fPt:
-          min: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16]
-          max: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
-
-model: models/FONLL-D0-pp14TeV-y05-measbins.txt #pb
+        fPt:
+            min: [0., 4., 10.]
+            max: [4., 10., 50.]
+        fCosP:
+            min: [0.8, 0.8, 0.85]
+            max: [1., 1., 1.]
+        fDecayLength:
+            min: [0.05, 0.05, 0.08]
+            max: [100., 100., 100.]
+        fd0MinDau:
+            min: [0.0025, 0.0025, 0.0025]
+            max: [100., 100., 100.]
+        fPtMinDau:
+            min: [0.3, 0.4, 0.4]
+            max: [1000., 1000., 1000.]
+        fSigmaVtx:
+            min: [0., 0., 0.]
+            max: [0.02, 0.02, 0.02]
+        fNormDecayLengthXY:
+            min: [3., 3., 3.]
+            max: [1000., 1000., 1000.]
+            
+model: models/FONLLDataDriven-Dplus-pp14TeV-y05-measbins.txt #pb
 BR: 0.0898
-fragfrac: 0.42
-luminosity: 0.0200 #pb-1
+fragfrac: 0.542
+luminosity: 200 #pb-1
 sigmaMB: 57800000000 #pb
 fprompt: 0.9 #approximation, to be changed

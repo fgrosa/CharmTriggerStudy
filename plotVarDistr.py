@@ -3,6 +3,7 @@ Script for the visualization of distributions
 '''
 
 import argparse
+import os
 import math
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
@@ -29,15 +30,45 @@ if cfg['applysel']['doapplysel']:
     dicofcuts = cfg['applysel']['selections']
 
 # signal
-dfSignalPrompt = pd.read_parquet('{0}/RecoPrompt.parquet.gzip'.format(indir))
-dfSignalFD = pd.read_parquet('{0}/RecoFD.parquet.gzip'.format(indir))
-# background
-dfBkg = pd.read_parquet('{0}/RecoBkg.parquet.gzip'.format(indir))
+print('Reading signal dataframes')
+for iPromptFile, promptFile in enumerate(os.listdir('{0}/RecoPrompt.parquet.gzip'.format(indir))):
+    if iPromptFile == 0:
+        dfSignalPrompt = pd.read_parquet('{0}/RecoPrompt.parquet.gzip/{1}'.format(indir, promptFile))
+        if cfg['applysel']['doapplysel']:
+            dfSignalPrompt = applyLinearCuts(dfSignalPrompt, dicofcuts)
+    else:
+        if len(dfSignalPrompt) >= 1000000:
+            break
+        dfSignalPrompt = dfSignalPrompt.append(pd.read_parquet('{0}/RecoPrompt.parquet.gzip/{1}'.format(\
+            indir, promptFile)))
+        if cfg['applysel']['doapplysel']:
+            dfSignalPrompt = applyLinearCuts(dfSignalPrompt, dicofcuts)
 
-if cfg['applysel']['doapplysel']:
-    dfBkg = applyLinearCuts(dfBkg, dicofcuts)
-    dfSignalPrompt = applyLinearCuts(dfSignalPrompt, dicofcuts)
-    dfSignalFD = applyLinearCuts(dfSignalFD, dicofcuts)
+for iFDFile, FDFile in enumerate(os.listdir('{0}/RecoFD.parquet.gzip'.format(indir))):
+    if iFDFile == 0:
+        dfSignalFD = pd.read_parquet('{0}/RecoFD.parquet.gzip/{1}'.format(indir, FDFile))
+        if cfg['applysel']['doapplysel']:
+            dfSignalFD = applyLinearCuts(dfSignalFD, dicofcuts)
+    else:
+        if len(dfSignalFD) >= 1000000:
+            break
+        dfSignalFD = dfSignalFD.append(pd.read_parquet('{0}/RecoFD.parquet.gzip/{1}'.format(indir, FDFile)))
+        if cfg['applysel']['doapplysel']:
+            dfSignalFD = applyLinearCuts(dfSignalFD, dicofcuts)
+
+# background
+print('Reading background dataframes')
+for iBkgFile, bkgFile in enumerate(os.listdir('{0}/RecoBkg.parquet.gzip'.format(indir))):
+    if iBkgFile == 0:
+        dfBkg = pd.read_parquet('{0}/RecoBkg.parquet.gzip/{1}'.format(indir, bkgFile))
+        if cfg['applysel']['doapplysel']:
+            dfBkg = applyLinearCuts(dfBkg, dicofcuts)
+    else:
+        if len(dfBkg) >= 1000000:
+            break
+        dfBkg = dfBkg.append(pd.read_parquet('{0}/RecoBkg.parquet.gzip/{1}'.format(indir, bkgFile)))
+        if cfg['applysel']['doapplysel']:
+            dfBkg = applyLinearCuts(dfBkg, dicofcuts)
 
 for (ptMin, ptMax) in zip(ptMins, ptMaxs):
     figVars, axesVars = plt.subplots(ncols=math.ceil(
@@ -65,7 +96,7 @@ for (ptMin, ptMax) in zip(ptMins, ptMaxs):
 if indir == 'B0':
     figPtScatter = plt.figure(figsize=(6, 5))
     hPtBvsPtD = plt.hist2d(dfSignalPrompt['fPt'], dfSignalPrompt['fPtD'], cmap='OrRd',
-                        range=np.array([(0., 24.), (0., 24.)]), bins=(96, 96), norm=LogNorm(vmin=1.e-1))
+                           range=np.array([(0., 24.), (0., 24.)]), bins=(96, 96), norm=LogNorm(vmin=1.e-1))
     plt.tick_params(axis='both', which='both', direction="in", labelsize=12)
     axesPtBvsPtD = figPtScatter.get_axes()[0]
     formataxes(axesPtBvsPtD, 0., 24., 0., 24.,
@@ -79,7 +110,7 @@ if indir == 'B0':
 elif indir == 'Bplus':
     figPtScatter = plt.figure(figsize=(6, 5))
     hPtBvsPtD = plt.hist2d(dfSignalPrompt['fPt'], dfSignalPrompt['fPtD0'], cmap='OrRd',
-                        range=np.array([(0., 24.), (0., 24.)]), bins=(96, 96), norm=LogNorm(vmin=1.e-1))
+                           range=np.array([(0., 24.), (0., 24.)]), bins=(96, 96), norm=LogNorm(vmin=1.e-1))
     plt.tick_params(axis='both', which='both', direction="in", labelsize=12)
     axesPtBvsPtD = figPtScatter.get_axes()[0]
     formataxes(axesPtBvsPtD, 0., 24., 0., 24.,

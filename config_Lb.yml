@@ -6,24 +6,24 @@ background:
     inputdir: PWGHF_D2H_CharmTrigger__Bmeson_Background
 
 output:
-    directory: B0
+    directory: Lb
 
-ptmin: [0, 2, 4, 6, 8, 12, 16]
-ptmax: [2, 4, 6, 8, 12, 16, 24]
+ptmin: [0]
+ptmax: [24]
 
-varstodraw: [fInvMassB0toDminuspi, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fImpParProd, fSigmaVtxD, fPtD, fInvMassD, fNormDecayLengthXYD]
-varmins: [4.8, 0., 0.9, 0.9, 0., 0., -0.01, 0., 0., 1.6, 0.]
-varmaxs: [5.6, 24., 1., 1., 1., 40., 0.01, 0.06, 24., 2.1, 40.]
+varstodraw: [fInvMassLbtoLcpluspi, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fImpParProd, fSigmaVtxD, fPtD, fInvMassDplus, fNormDecayLengthXYD]
+varmins: [5.2, 0., 0.9, 0.9, 0., 0., -0.01, 0., 0., 1.6, 0.]
+varmaxs: [6., 24., 1., 1., 1., 40., 0.01, 0.06, 24., 2.1, 40.]
 
 genbranch: GenHadron
-seldecays: [14]
-massnames: [fInvMassB0toDminuspi]
+seldecays: [16]
+massnames: [fInvMassLbtoLcpluspi]
 recobranch: Beauty4Prong
-recoselbits: [10]
+recoselbits: [12]
 fidaccbit: -1
 
 applysel:
-    doapplysel: True
+    doapplysel: False
     selections:
         fPt:
             min: [0, 2, 4, 6, 8, 12, 16]
@@ -32,26 +32,23 @@ applysel:
             min: [2, 2, 2, 2, 2, 2, 2]
             max: [100, 100, 100, 100, 100, 100, 100]
         fCosPXY:
-            min: [0.96, 0.97, 0.97, 0.98, 0.98, 0.98, 0.98]
+            min: [0.95, 0.97, 0.97, 0.98, 0.98, 0.98, 0.98]
             max: [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00]
         fCosP:
             min: [0.95, 0.95, 0.95, 0.96, 0.96, 0.96, 0.96]
             max: [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00]
         fSigmaVtxD:
             min: [0., 0., 0., 0., 0., 0., 0.]
-            max: [0.010, 0.015, 0.015, 0.015, 0.015, 0.015, 0.015]
+            max: [0.015, 0.015, 0.015, 0.015, 0.015, 0.015, 0.015]
         fNormDecayLengthXYD:
-            min: [5., 5., 5., 8., 8., 8., 8.]
+            min: [4., 5., 5., 8., 8., 8., 8.]
             max: [1000., 1000., 1000., 1000., 1000., 1000., 1000.]
         fNormDecayLengthXY:
             min: [0., 1., 1., 2., 2., 2., 2.]
             max: [1000., 1000., 1000., 1000., 1000., 10000., 10000.]
-        fImpParProd:
-            min: [-1., -1., -1., -1., -1., -1., -1.]
-            max: [0., 0., 0., 0., 0., 0., 0.]
-        fInvMassD:
-            min: [1.82, 1.82, 1.82, 1.82, 1.82, 1.82, 1.82]
-            max: [1.92, 1.92, 1.92, 1.92, 1.92, 1.92, 1.92]
+        fInvMassDplus:
+            min: [1.83, 1.83, 1.83, 1.83, 1.83, 1.83, 1.83]
+            max: [1.91, 1.91, 1.91, 1.91, 1.91, 1.91, 1.91]
 
 model: models/FONLL-B-pp14TeV-y05-widebins.txt #pb
 BR: 0.000226296

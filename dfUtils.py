@@ -30,6 +30,10 @@ def filterBitDf(dfToFilter, column, bitsToTest, logic='or'):
     '''
     Method to apply selection testing a bit
     '''
+    for bit in bitsToTest:
+        if bit < 0:
+            bitsToTest.remove(bit)
+
     maskOfBits = getMaskOfBits(bitsToTest)
     flags = dfToFilter[column] & maskOfBits
     if logic == 'or':

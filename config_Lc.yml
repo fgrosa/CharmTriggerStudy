@@ -5,22 +5,22 @@ background:
     inputfile: data/2Prong_3Prong_FilteringSel_LHC18j4_improved.root
     inputdir: PWGHF_D2H_CharmTrigger_GenPurpose
 
-output:
-    directory: D0
-
 ptmin: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16]
 ptmax: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
 
-varstodraw: [InvMass, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fImpParProd, fPtMinDau, fd0MinDau]
-varmins: [1.6, 0., 0.8, 0.8, 0., 0., -0.01, 0, 0.]
-varmaxs: [2.1, 24., 1., 1., 1., 40., 0.01, 2., 0.01]
+output:
+    directory: Lc
+
+varstodraw: [InvMass, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fSigmaVtx, fPtMinDau, fd0MinDau]
+varmins: [2.2, 0., 0.8, 0.8, 0., 0., 0., 0, 0.]
+varmaxs: [2.4, 24., 1., 1., 1., 40., 0.06, 2., 0.01]
 
 genbranch: GenHadron
-seldecays: [2, 1] #D0 and D0bar
-massnames: [fInvMassD0, fInvMassD0bar]
-recobranch: Charm2Prong
-recoselbits: [0, 1]
-fidaccbit: 22
+seldecays: [9, 10]
+massnames: [fInvMassLctopKpi, fInvMassLctopiKp]
+recobranch: Charm3Prong
+recoselbits: [6, 7]
+fidaccbit: 26
 
 applysel:
     doapplysel: True
@@ -40,13 +40,15 @@ applysel:
         fPtMinDau:
             min: [0.3, 0.4, 0.4]
             max: [1000., 1000., 1000.]
+        fSigmaVtx:
+            min: [0., 0., 0.]
+            max: [0.02, 0.02, 0.02]
         fNormDecayLengthXY:
             min: [3., 3., 3.]
             max: [1000., 1000., 1000.]
 
-        
-model: models/FONLL-D0-pp14TeV-y05-measbins.txt #pb
-BR: 0.0389
+model: models/FONLLDataDriven-Ds-pp14TeV-y05-measbins.txt #pb
+BR: 0.0623
 fragfrac: 0.542
 luminosity: 200 #pb-1
 sigmaMB: 57800000000 #pb

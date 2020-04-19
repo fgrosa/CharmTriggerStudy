@@ -1,0 +1,9 @@
+inputdirs: [Bplus, B0]
+colors: [864, 632]
+markers: [20, 21]
+legendnames: ['B^{+}#rightarrow#bar{D}^{0}#pi^{+}', 'B^{0}#rightarrowD^{#font[122]{-}}#pi^{+}']
+
+luminosity: 200 #pb-1
+ptbinvsLint: 1
+
+outputdir: results/Bhadrons

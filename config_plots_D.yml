@@ -1,0 +1,9 @@
+inputdirs: [D0/Tight, Dplus/Tight, Ds/Tight, Lc/Tight]
+colors: [632, 418, 807, 864]
+markers: [21, 22, 34, 33]
+legendnames: ['D^{0}#rightarrowK^{#font[122]{-}}#pi^{+}', 'D^{+}#rightarrowK^{#font[122]{-}}#pi^{+}#pi^{+}', 'D_{s}^{+}#rightarrow#phi#pi^{+}#rightarrowK^{#font[122]{-}}K^{+}#pi^{+}', '#Lambda_{c}^{+}#rightarrowpK^{#font[122]{-}}#pi^{+}']
+
+luminosity: 200 #pb-1
+ptbinvsLint: 1
+
+outputdir: results/DtightCuts

@@ -3,6 +3,12 @@
 *.pcm
 *.xml
 *.root
+*/*.root
+*/*.pdf
+*.pdf
+*.parquet.gzip
+*/*.parquet.gzip
 stderr
 stdout
 __pycache__
+.DS_Store

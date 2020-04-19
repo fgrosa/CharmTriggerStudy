@@ -29,7 +29,7 @@ gStyle.SetOptStat(0)
 gStyle.SetPadTickX(1)
 gStyle.SetPadTickY(1)
 
-dfD0FONLL = pd.read_csv('FONLL-D0-pp14TeV-y05-measbins.txt', sep=' ')
+dfD0FONLL = pd.read_csv('models/FONLL-D0-pp14TeV-y05-measbins.txt', sep=' ')
 ratiosDfile = TFile.Open('HEPData-ins1716440-v1-root.root')
 
 # D-meson ratios
@@ -66,7 +66,7 @@ fLcOverD0.FixParameter(0, 0.11)
 # fLcOverD0.SetParLimits(3, 0.9, 1.)
 SetGraphStyle(fLcOverD0, kAzure+4, -1, 3)
 
-cRatios = TCanvas('cRatios', '', 800, 800)
+cRatios = TCanvas('cRatios', '', 1920, 1080)
 cRatios.Divide(2, 2)
 hFrameDplus = cRatios.cd(1).DrawFrame(
     0., 0., 50., 1.5, ';#it{p}_{T} (GeV/#it{c}); D^{+} / D^{0}')
@@ -88,5 +88,24 @@ hFrameLc = cRatios.cd(4).DrawFrame(
 hFrameLc.GetYaxis().SetDecimals()
 gLcOverD0.Draw('p')
 gLcOverD0.Fit('fLcOverD0', 'r')
+
+dfDplus = dfD0FONLL.copy()
+for col in dfDplus.columns:
+    if col not in ['ptmin', 'ptmax']:
+        dfDplus[col] = dfDplus.apply(lambda x: x[col]*gDplusOverD0.Eval((x['ptmax']+x['ptmin'])/2), axis=1)
+
+dfDs = dfD0FONLL.copy()
+for col in dfDs.columns:
+    if col not in ['ptmin', 'ptmax']:
+        dfDs[col] = dfDs.apply(lambda x: x[col]*gDsOverD0.Eval((x['ptmax']+x['ptmin'])/2), axis=1)
+
+dfLc = dfD0FONLL.copy()
+for col in dfLc.columns:
+    if col not in ['ptmin', 'ptmax']:
+        dfLc[col] = dfLc.apply(lambda x: x[col]*gLcOverD0.Eval((x['ptmax']+x['ptmin'])/2), axis=1)
+
+dfDplus.to_csv('models/FONLLDataDriven-Dplus-pp14TeV-y05-measbins.txt', sep=' ')
+dfDs.to_csv('models/FONLLDataDriven-Ds-pp14TeV-y05-measbins.txt', sep=' ')
+dfLc.to_csv('models/FONLLDataDriven-Lc-pp14TeV-y05-measbins.txt', sep=' ')
 
 input('Press enter to exit')

@@ -20,10 +20,10 @@ def getGraphFromHistos(histoCent, histoMin, histoMax):
 
     return graph
 
-SetGlobalStyle(padbottommargin=0.14, padtopmargin=0.035)
+SetGlobalStyle(padbottommargin=0.14, padleftmargin=0.14, padtopmargin=0.08, opttitle=1)
 
 parser = argparse.ArgumentParser(description='Arguments')
-parser.add_argument('configfile', metavar='text', default='config.yml', help='input root file name')
+parser.add_argument('configfile', metavar='text', default='config.yml', help='input yaml file name')
 args = parser.parse_args()
 
 with open(args.configfile, 'r') as ymlCfgFile:
@@ -31,10 +31,11 @@ with open(args.configfile, 'r') as ymlCfgFile:
 
 luminosity = cfg['luminosity']
 ptbinvsLint = cfg['ptbinvsLint']
+outputDir = cfg['outputdir']
 
 hSignificanceCent, hSignificanceMin, hSignificanceMax, gSignificance = ([] for iList in range(4))
 hSoverBCent, hSoverBMin, hSoverBMax, gSoverB = ([] for iList in range(4))
-hEffAcc = []
+hEffAccPrompt, hEffAccFD = [], []
 
 for indir, col, mark in zip(cfg['inputdirs'], cfg['colors'], cfg['markers']):
 
@@ -63,9 +64,15 @@ for indir, col, mark in zip(cfg['inputdirs'], cfg['colors'], cfg['markers']):
     SetObjectStyle(hSoverBCent[-1], color=col, markerstyle=mark)
 
     infileEff = TFile.Open('{0}/Efficiency.root'.format(indir))
-    hEffAcc.append(infileEff.Get('hEffAccPrompt'))
-    hEffAcc[-1].SetDirectory(0)
-    SetObjectStyle(hEffAcc[-1], color=col, markerstyle=mark)
+    hEffAccPrompt.append(infileEff.Get('hEffAccPrompt'))
+    hEffAccFD.append(infileEff.Get('hEffAccFD'))
+    if 'Ds' in indir:
+        hEffAccPrompt[-1].Scale(1./2)
+        hEffAccFD[-1].Scale(1./2)
+    hEffAccPrompt[-1].SetDirectory(0)
+    hEffAccFD[-1].SetDirectory(0)
+    SetObjectStyle(hEffAccPrompt[-1], linecolor=col, markercolor=col, markerstyle=mark)
+    SetObjectStyle(hEffAccFD[-1], linecolor=col, markercolor=col, markerstyle=mark)
 
 stepLumi = [0.1+lum*0.1 for lum in range(2000)]
 hSignificanceVsLumi, gSignificanceVsLumi = [], []
@@ -104,15 +111,16 @@ legSignif = TLegend(0.4, 0.2, 0.8, 0.4)
 legSignif.SetTextSize(0.05)
 legSignif.SetFillStyle(0)
 legSignifVsLumi = legSignif.Clone()
-for (hist, legname) in zip(hEffAcc, cfg['legendnames']):
+for (hist, legname) in zip(hEffAccPrompt, cfg['legendnames']):
     legSignif.AddEntry(hist, legname, 'lp')
     legSignifVsLumi.AddEntry(hist, legname, 'l')
 legSignif.AddEntry(gDummy, 'FONLL uncertainty', 'f')
+legSignifVsLumi.AddEntry(gDummy, 'FONLL uncertainty', 'f')
 
-legEff = TLegend(0.4, 0.25, 0.8, 0.4)
+legEff = TLegend(0.4, 0.2, 0.8, 0.45)
 legEff.SetTextSize(0.05)
 legEff.SetFillStyle(0)
-for (hist, legname) in zip(hEffAcc, cfg['legendnames']):
+for (hist, legname) in zip(hEffAccPrompt, cfg['legendnames']):
     legEff.AddEntry(hist, legname, 'lp')
 
 cSignificanceVsPt = TCanvas('cSignificanceVsPt', '', 500, 500)
@@ -124,11 +132,12 @@ cSignificanceVsPt.SetLogy()
 for hist, gr in zip(hSignificanceCent, gSignificance):
     gr.Draw('2')
     hist.DrawCopy('same')
-lat.DrawLatex(0.18, 0.87, 'pp, #sqrt{#it{s}} = 14 TeV, #it{L}_{int} = 200 pb^{-1}')
+lat.DrawLatex(0.18, 0.89, 'ALICE Upgrade projection')
+lat.DrawLatex(0.18, 0.82, 'pp, #sqrt{#it{s}} = 14 TeV, #it{L}_{int} = 200 pb^{-1}')
 legSignif.Draw()
 
 cSignificanceVsLumi = TCanvas('cSignificanceVsLumi', '', 500, 500)
-hFrameVsLumi = cSignificanceVsLumi.DrawFrame(0.1, 1.e-2, 200, 4.e2, \
+hFrameVsLumi = cSignificanceVsLumi.DrawFrame(0.1, 0.01, 200, 4.e2, \
     ';#it{L}_{int} (pb^{-1});Expected significance (3#sigma)')
 hFrameVsLumi.GetYaxis().SetTitleOffset(1.2)
 cSignificanceVsLumi.SetLogy()
@@ -136,7 +145,8 @@ cSignificanceVsLumi.SetLogx()
 for hist, gr in zip(hSignificanceVsLumi, gSignificanceVsLumi):
     gr.Draw('C4')
 lineAtFive.Draw("same")
-lat.DrawLatex(0.18, 0.87, 'pp, #sqrt{#it{s}} = 14 TeV, %0.f < #it{p}_{T} < %0.f GeV/#it{c}' \
+lat.DrawLatex(0.18, 0.89, 'ALICE Upgrade projection')
+lat.DrawLatex(0.18, 0.82, 'pp, #sqrt{#it{s}} = 14 TeV, %0.f < #it{p}_{T} < %0.f GeV/#it{c}' \
     % (hSignificanceCent[0].GetBinLowEdge(ptbinvsLint), \
         hSignificanceCent[0].GetBinLowEdge(ptbinvsLint)+hSignificanceCent[0].GetBinWidth(ptbinvsLint)))
 legSignifVsLumi.Draw()
@@ -150,17 +160,34 @@ cSoverBVsPt.SetLogy()
 for hist, gr in zip(hSoverBCent, gSoverB):
     gr.Draw('2')
     hist.DrawCopy('Lsame')
-lat.DrawLatex(0.18, 0.87, 'pp, #sqrt{#it{s}} = 14 TeV, #it{L}_{int} = 200 pb^{-1}')
+lat.DrawLatex(0.18, 0.89, 'ALICE Upgrade projection')
+lat.DrawLatex(0.18, 0.82, 'pp, #sqrt{#it{s}} = 14 TeV, #it{L}_{int} = 200 pb^{-1}')
 legSignif.Draw()
 
-cEff = TCanvas('cEff', '', 500, 500)
-hFrameEffVsPt = cEff.DrawFrame(hEffAcc[0].GetBinLowEdge(1), 1.e-4, \
-    hEffAcc[0].GetXaxis().GetBinUpEdge(hEffAcc[0].GetNbinsX()), 1., \
-        ';#it{p}_{T} (GeV/#it{c});Acceptance times efficiency')
-hFrameEffVsPt.GetYaxis().SetTitleOffset(1.2)
-cEff.SetLogy()
-for hist in hEffAcc:
-    hist.DrawCopy('same')
-legEff.Draw()
+cEff = TCanvas('cEff', '', 1000, 500)
+cEff.Divide(2, 1)
+for iHist, (histP, histF) in enumerate(zip(hEffAccPrompt, hEffAccFD)):
+    if iHist == 0:
+        hFrameEffPromptVsPt = cEff.cd(1).DrawFrame(hEffAccPrompt[0].GetBinLowEdge(1), 2.e-4, \
+            hEffAccPrompt[0].GetXaxis().GetBinUpEdge(hEffAccPrompt[0].GetNbinsX()), 1.5, \
+            'Prompt;#it{p}_{T} (GeV/#it{c});Acceptance #times efficiency #times 2#it{y}_{fid}')
+        hFrameEffPromptVsPt.GetYaxis().SetTitleOffset(1.2)
+    cEff.cd(1).SetLogy()
+    histP.DrawCopy('Esame')
+    legEff.Draw()
+
+    if iHist == 0:
+        hFrameEffFDVsPt = cEff.cd(2).DrawFrame(hEffAccPrompt[0].GetBinLowEdge(1), 2.e-4, \
+            hEffAccPrompt[0].GetXaxis().GetBinUpEdge(hEffAccPrompt[0].GetNbinsX()), 1.5, \
+            'Feed-down;#it{p}_{T} (GeV/#it{c});Acceptance #times efficiency #times 2#it{y}_{fid}')
+        hFrameEffFDVsPt.GetYaxis().SetTitleOffset(1.2)
+    cEff.cd(2).SetLogy()
+    histF.DrawCopy('Esame')
+    legEff.Draw()
+
+cSignificanceVsPt.SaveAs('{0}/Significance_vs_Pt.pdf'.format(outputDir))
+cSignificanceVsLumi.SaveAs('{0}/Significance_vs_Lumi.pdf'.format(outputDir))
+cSoverBVsPt.SaveAs('{0}/SoverB_vs_Pt.pdf'.format(outputDir))
+cEff.SaveAs('{0}/Efficiency_vs_Pt.pdf'.format(outputDir))
 
 input('Press enter to exit')

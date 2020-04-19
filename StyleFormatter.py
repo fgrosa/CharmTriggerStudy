@@ -3,6 +3,34 @@ Script with helper methods for style settings
 '''
 
 from ROOT import gStyle, TGaxis  # pylint: disable=import-error,no-name-in-module
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+
+
+def formataxes(axes, xmin, xmax, ymin, ymax, xtitle, ytitle,
+               majticksx=None, minticksx=None, majticksy=None, minticksy=None):
+    axes.set_title('')
+    axes.set_xlabel(xtitle, fontsize=14)
+    axes.set_ylabel(ytitle, fontsize=14)
+    axes.set_xlim(xmin, xmax)
+    axes.set_ylim(ymin, ymax)
+    majorFormatter = FormatStrFormatter('%.1f')
+    if majticksx and minticksx:
+        majorLocator_x = MultipleLocator(majticksx)
+        minorLocator_x = MultipleLocator(minticksx)
+        axes.xaxis.set_major_locator(majorLocator_x)
+        axes.xaxis.set_minor_locator(minorLocator_x)
+        axes.xaxis.set_major_formatter(majorFormatter)
+    if majticksy and minticksy:
+        majorLocator_y = MultipleLocator(majticksy)
+        minorLocator_y = MultipleLocator(minticksy)
+        axes.yaxis.set_major_locator(majorLocator_y)
+        axes.yaxis.set_minor_locator(minorLocator_y)
+        axes.yaxis.set_major_formatter(majorFormatter)
+    axes.xaxis.set_ticks_position('both')
+    axes.yaxis.set_ticks_position('both')
+    axes.tick_params(length=8, width=1)
+    axes.tick_params(length=4, width=1, which='minor')
+    axes.set_rasterization_zorder(1)
 
 
 # pylint: disable=too-many-branches
@@ -39,7 +67,7 @@ def SetGlobalStyle(**kwargs):
     - maxdigits (int), default no max value
     '''
 
-    #pad margins
+    # pad margins
     if 'padrightmargin' in kwargs:
         gStyle.SetPadRightMargin(kwargs['padrightmargin'])
     else:
@@ -60,7 +88,7 @@ def SetGlobalStyle(**kwargs):
     else:
         gStyle.SetPadBottomMargin(0.1)
 
-    #title sizes
+    # title sizes
     if 'titlesize' in kwargs:
         gStyle.SetTitleSize(kwargs['titlesize'], 'xyz')
     else:
@@ -73,7 +101,7 @@ def SetGlobalStyle(**kwargs):
     if 'titlesizez' in kwargs:
         gStyle.SetTitleSize(kwargs['titlesizex'], 'z')
 
-    #label sizes
+    # label sizes
     if 'labelsize' in kwargs:
         gStyle.SetLabelSize(kwargs['labelsize'], 'xyz')
     else:
@@ -86,7 +114,7 @@ def SetGlobalStyle(**kwargs):
     if 'labelsizez' in kwargs:
         gStyle.SetLabelSize(kwargs['labelsizex'], 'z')
 
-    #title offsets
+    # title offsets
     if 'titleoffset' in kwargs:
         gStyle.SetTitleOffset(kwargs['titleoffset'], 'xyz')
     else:
@@ -99,7 +127,7 @@ def SetGlobalStyle(**kwargs):
     if 'titleoffsetz' in kwargs:
         gStyle.SetTitleOffset(kwargs['titleoffsetz'], 'z')
 
-    #other options
+    # other options
     if 'opttitle' in kwargs:
         gStyle.SetOptTitle(kwargs['opttitle'])
     else:
@@ -145,7 +173,7 @@ def SetObjectStyle(obj, **kwargs):
     - alpha (float) sets same alpha for line, marker and fill
     '''
 
-    #alpha parameters
+    # alpha parameters
     lalpha = kwargs.get('linealpha', 1)
     malpha = kwargs.get('markeralpha', 1)
     falpha = kwargs.get('fillalpha', 1)
@@ -154,7 +182,7 @@ def SetObjectStyle(obj, **kwargs):
         malpha = kwargs['markeralpha']
         falpha = kwargs['fillalpha']
 
-    #line styles
+    # line styles
     if 'linecolor' in kwargs:
         obj.SetLineColorAlpha(kwargs['linecolor'], lalpha)
     else:
@@ -170,7 +198,7 @@ def SetObjectStyle(obj, **kwargs):
     else:
         obj.SetLineStyle(1)
 
-    #marker styles
+    # marker styles
     if 'markercolor' in kwargs:
         obj.SetMarkerColorAlpha(kwargs['markercolor'], malpha)
     else:
@@ -186,7 +214,7 @@ def SetObjectStyle(obj, **kwargs):
     else:
         obj.SetMarkerStyle(20)
 
-    #fill styles
+    # fill styles
     if 'fillcolor' in kwargs:
         obj.SetFillColorAlpha(kwargs['fillcolor'], falpha)
 

@@ -88,6 +88,8 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
     bool enableLc2V0 = static_cast<bool>(config["taskoptions"]["enableLc2V0"].as<int>());
     bool enableBplus = static_cast<bool>(config["taskoptions"]["enableBplus"].as<int>());
     bool enableB0 = static_cast<bool>(config["taskoptions"]["enableB0"].as<int>());
+    bool enableBs = static_cast<bool>(config["taskoptions"]["enableBs"].as<int>());
+    bool enableLb = static_cast<bool>(config["taskoptions"]["enableLb"].as<int>());
 
     // since we will compile a class, tell root where to look for headers
     gInterpreter->ProcessLine(".include $ROOTSYS/include");
@@ -100,16 +102,16 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
 
     AliPhysicsSelectionTask *physseltask = nullptr;
     if(runMode!="terminate")
-        physseltask = reinterpret_cast<AliPhysicsSelectionTask *>(gInterpreter->ProcessLine(Form(".x %s (%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"),isRunOnMC)));
+        physseltask = reinterpret_cast<AliPhysicsSelectionTask *>(gInterpreter->ProcessLine(Form(".x %s(%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"),isRunOnMC)));
 
-    AliAnalysisTaskPIDResponse *pidResp = reinterpret_cast<AliAnalysisTaskPIDResponse *>(gInterpreter->ProcessLine(Form(".x %s (%d)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"),isRunOnMC)));
+    AliAnalysisTaskPIDResponse *pidResp = reinterpret_cast<AliAnalysisTaskPIDResponse *>(gInterpreter->ProcessLine(Form(".x %s(%d)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"),isRunOnMC)));
 
     if(resolCurrent!="" && resolUpgr!="")
     {
         AliAnalysisTaskSEImproveITS3* taskimpr = reinterpret_cast<AliAnalysisTaskSEImproveITS3 *>(gInterpreter->ProcessLine(Form(".x %s(%d,\"%s\",\"%s\",%d)", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/AddTaskImproverUpgrade.C"),false, resolCurrent.data(), resolUpgr.data(), 0)));
     }
 
-    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,\"%s\",%d,\"%s\")", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/AddTaskCharmTriggerStudy.C"), System, enableD0, enableDplus, enableDs, enableLc, enableDstar, enableLc2V0, enableBplus, enableB0, writeonlysignal, cutFileName.data(), applyCuts, "Signal")));
+    AliAnalysisTaskSECharmTriggerStudy *tasktrigger = reinterpret_cast<AliAnalysisTaskSECharmTriggerStudy *>(gInterpreter->ProcessLine(Form(".x %s(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,\"%s\",%d,\"%s\")", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/upgrade/AddTaskCharmTriggerStudy.C"), System, enableD0, enableDplus, enableDs, enableLc, enableDstar, enableLc2V0, enableBplus, enableB0, enableBs, enableLb, writeonlysignal, cutFileName.data(), applyCuts, "GenPurpose")));
 
     if(System==AliAnalysisTaskSECharmTriggerStudy::kPbPb) {
         AliAnalysisTaskSECleanupVertexingHF *taskclean =reinterpret_cast<AliAnalysisTaskSECleanupVertexingHF *>(gInterpreter->ProcessLine(Form(".x %s", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskCleanupVertexingHF.C"))));
@@ -144,8 +146,8 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
         alienHandler->AddIncludePath("-I. -I$ROOTSYS/include -I$ALICE_ROOT -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
 
         //make sure your source files get copied to grid
-        alienHandler->SetAdditionalLibs("AliAnalysisTaskSECharmTriggerStudy.h AliAnalysisTaskSECharmTriggerStudy.cxx");
-        alienHandler->SetAnalysisSource("AliAnalysisTaskSECharmTriggerStudy.cxx");
+        // alienHandler->SetAdditionalLibs("AliAnalysisTaskSECharmTriggerStudy.h AliAnalysisTaskSECharmTriggerStudy.cxx");
+        // alienHandler->SetAnalysisSource("AliAnalysisTaskSECharmTriggerStudy.cxx");
 
         // select the aliphysics version.
         alienHandler->SetAliPhysicsVersion(aliPhysVersion.data());
@@ -168,7 +170,7 @@ void RunAnalysisCharmTrigger(TString configfilename, TString runMode="full", boo
 
         // number of files per subjob
         alienHandler->SetSplitMaxInputFileNumber(splitmaxinputfilenum);
-        alienHandler->SetExecutable("CharmTriggerStudy.sh");
+        alienHandler->SetExecutable("myAnalysis.sh");
 
         // specify how many seconds your job may take
         alienHandler->SetTTL(15000);
