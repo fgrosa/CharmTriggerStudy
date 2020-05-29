@@ -1,0 +1,10 @@
+inputdirs: [Bplus, BplusWTrigger4GeV, BplusWTrigger6GeV]
+colors: [864, 632, 418]
+markers: [20, 21, 22]
+legendnames: ['B^{+}#rightarrow#bar{D}^{0}#pi^{+}', 'B^{+}#rightarrow#bar{D}^{0}#pi^{+}, #it{p}_{T}(D^{0}) > 4 GeV/#it{c}', 'B^{+}#rightarrow#bar{D}^{0}#pi^{+}, #it{p}_{T}(D^{0}) > 6 GeV/#it{c}']
+
+luminosity: 200 #pb-1
+ptbinvsLint: 1
+
+outputdir: results/Bhadrons
+outputsuffix: _diffTrigger

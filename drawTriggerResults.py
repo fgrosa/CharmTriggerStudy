@@ -5,6 +5,7 @@ from StyleFormatter import SetGlobalStyle, SetObjectStyle
 parser = argparse.ArgumentParser(description='Arguments')
 parser.add_argument('infile', metavar='text', default='trigger.root', help='input root file name')
 parser.add_argument('--infilePID', metavar='text', default=None, help='input root file name with PID')
+parser.add_argument('--infileB', metavar='text', default=None, help='input root file name with B mass requirement')
 args = parser.parse_args()
 
 SetGlobalStyle(padbottommargin=0.14, padleftmargin=0.16, padtopmargin=0.035, titleoffsety=1.5)
@@ -62,6 +63,33 @@ if args.infilePID:
     SetObjectStyle(gPurityTrigEventsDouble3ProngPID, color=418, markerstyle=25)
     SetObjectStyle(gPurityTrigEvents2ProngAnd3ProngPID, color=864, markerstyle=26)
 
+if args.infileB:
+    infile = TFile.Open(args.infileB)
+    gFracTrigEvents2ProngB = infile.Get('gFracTrigEvents2Prong')
+    gFracTrigEvents3ProngB = infile.Get('gFracTrigEvents3Prong')
+    gFracTrigEvents2ProngOr3ProngB = infile.Get('gFracTrigEvents2ProngOr3Prong')
+    gFracTrigEventsDouble2ProngB = infile.Get('gFracTrigEventsDouble2Prong')
+    gFracTrigEventsDouble3ProngB = infile.Get('gFracTrigEventsDouble3Prong')
+    gFracTrigEvents2ProngAnd3ProngB = infile.Get('gFracTrigEvents2ProngAnd3Prong')
+    gPurityTrigEvents2ProngB = infile.Get('gPurityTrigEvents2Prong')
+    gPurityTrigEvents3ProngB = infile.Get('gPurityTrigEvents3Prong')
+    gPurityTrigEvents2ProngOr3ProngB = infile.Get('gPurityTrigEvents2ProngOr3Prong')
+    gPurityTrigEventsDouble2ProngB = infile.Get('gPurityTrigEventsDouble2Prong')
+    gPurityTrigEventsDouble3ProngB = infile.Get('gPurityTrigEventsDouble3Prong')
+    gPurityTrigEvents2ProngAnd3ProngB = infile.Get('gPurityTrigEvents2ProngAnd3Prong')
+    SetObjectStyle(gFracTrigEvents2ProngB, color=632, markerstyle=24)
+    SetObjectStyle(gFracTrigEvents3ProngB, color=418, markerstyle=25)
+    SetObjectStyle(gFracTrigEvents2ProngOr3ProngB, color=864, markerstyle=26)
+    SetObjectStyle(gFracTrigEventsDouble2ProngB, color=632, markerstyle=24)
+    SetObjectStyle(gFracTrigEventsDouble3ProngB, color=418, markerstyle=25)
+    SetObjectStyle(gFracTrigEvents2ProngAnd3ProngB, color=864, markerstyle=26)
+    SetObjectStyle(gPurityTrigEvents2ProngB, color=632, markerstyle=24)
+    SetObjectStyle(gPurityTrigEvents3ProngB, color=418, markerstyle=25)
+    SetObjectStyle(gPurityTrigEvents2ProngOr3ProngB, color=864, markerstyle=26)
+    SetObjectStyle(gPurityTrigEventsDouble2ProngB, color=632, markerstyle=24)
+    SetObjectStyle(gPurityTrigEventsDouble3ProngB, color=418, markerstyle=25)
+    SetObjectStyle(gPurityTrigEvents2ProngAnd3ProngB, color=864, markerstyle=26)
+
 legSingle = TLegend(0.2, 0.2, 0.4, 0.4)
 legSingle.SetTextSize(0.045)
 legSingle.SetBorderSize(0)
@@ -95,6 +123,12 @@ if args.infilePID:
     gFracTrigEvents2ProngOr3ProngPID.Draw('P')
     lat.DrawLatex(0.5, 0.9, 'full markers: w/o PID')
     lat.DrawLatex(0.5, 0.84, 'open markers: w/ PID')
+if args.infileB:
+    gFracTrigEvents2ProngB.Draw('P')
+    gFracTrigEvents3ProngB.Draw('P')
+    gFracTrigEvents2ProngOr3ProngB.Draw('P')
+    lat.DrawLatex(0.5, 0.9, 'full markers: w/o B mass')
+    lat.DrawLatex(0.5, 0.84, 'open markers: w/ B mass')
 
 cEffDouble = TCanvas('cEffDouble', '', 500, 500)
 cEffDouble.DrawFrame(-0.5, 1.e-8, 10.5, 1., ';#it{p}_{T} (GeV/#it{c}) > ;Fraction of events;')
@@ -110,6 +144,12 @@ if args.infilePID:
     gFracTrigEvents2ProngAnd3ProngPID.Draw('P')
     lat.DrawLatex(0.5, 0.9, 'full markers: w/o PID')
     lat.DrawLatex(0.5, 0.84, 'open markers: w/ PID')
+if args.infileB:
+    gFracTrigEventsDouble2ProngB.Draw('P')
+    gFracTrigEventsDouble3ProngB.Draw('P')
+    gFracTrigEvents2ProngAnd3ProngB.Draw('P')
+    lat.DrawLatex(0.5, 0.9, 'full markers: w/o B mass')
+    lat.DrawLatex(0.5, 0.84, 'open markers: w/ B mass')
 
 cPuritySingle = TCanvas('cPuritySingle', '', 500, 500)
 cPuritySingle.DrawFrame(-0.5, 1.e-5, 10.5, 10., ';#it{p}_{T} (GeV/#it{c}) > ;Purity;')
@@ -125,6 +165,12 @@ if args.infilePID:
     gPurityTrigEvents2ProngOr3ProngPID.Draw('P')
     lat.DrawLatex(0.5, 0.9, 'full markers: w/o PID')
     lat.DrawLatex(0.5, 0.84, 'open markers: w/ PID')
+if args.infileB:
+    gPurityTrigEvents2ProngB.Draw('P')
+    gPurityTrigEvents3ProngB.Draw('P')
+    gPurityTrigEvents2ProngOr3ProngB.Draw('P')
+    lat.DrawLatex(0.5, 0.9, 'full markers: w/o B mass')
+    lat.DrawLatex(0.5, 0.84, 'open markers: w/ B mass')
 
 cPurityDouble = TCanvas('cPurityDouble', '', 500, 500)
 cPurityDouble.DrawFrame(-0.5, 1.e-8, 10.5, 10., ';#it{p}_{T} (GeV/#it{c}) > ;Purity;')
@@ -140,6 +186,12 @@ if args.infilePID:
     gPurityTrigEvents2ProngAnd3ProngPID.Draw('P')
     lat.DrawLatex(0.5, 0.9, 'full markers: w/o PID')
     lat.DrawLatex(0.5, 0.84, 'open markers: w/ PID')
+if args.infilePID:
+    gPurityTrigEventsDouble2ProngB.Draw('P')
+    gPurityTrigEventsDouble3ProngB.Draw('P')
+    gPurityTrigEvents2ProngAnd3ProngB.Draw('P')
+    lat.DrawLatex(0.5, 0.9, 'full markers: w/o B mass')
+    lat.DrawLatex(0.5, 0.84, 'open markers: w/ B mass')
 
 outFileNameSingle = args.infile.replace('.root', '_Eff_SingleTrigger.pdf')
 cEffSingle.SaveAs(outFileNameSingle)

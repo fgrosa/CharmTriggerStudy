@@ -1,0 +1,64 @@
+signal:
+    inputfile: data/Bplus_B0_Bs_Lb_pp13TeV_Enriched_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger__Bmeson_Signal
+background:
+    inputfile: data/Bplus_B0_Bs_Lb_pp13TeV_GenPurpose_improved.root
+    inputdir: PWGHF_D2H_CharmTrigger__Bmeson_Background
+
+output:
+    directory: BplusWTrigger4GeV
+
+ptmin: [3, 4, 6, 8, 12, 16]
+ptmax: [4, 6, 8, 12, 16, 24]
+    
+varstodraw: [fInvMassBplustoD0pi, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fImpParProd, fPtD0, fInvMassD0, fNormDecayLengthXYD0]
+varmins: [4.8, 0., 0.9, 0.9, 0., 0., -0.01, 0., 1.6, 0.]
+varmaxs: [5.6, 24., 1., 1., 1., 40., 0.01, 24., 2.1, 40.]
+
+genbranch: GenHadron
+seldecays: [13]
+massnames: [fInvMassBplustoD0pi]
+recobranch: Beauty3Prong
+recoselbits: [9]
+fidaccbit: -1
+
+applysel:
+    doapplysel: True
+    selections:
+        fPt:
+            min: [3, 4, 6, 8, 12, 16]
+            max: [4, 6, 8, 12, 16, 24]
+        fCosPXY:
+            min: [0.97, 0.97, 0.98, 0.98, 0.98, 0.98]
+            max: [1.00, 1.00, 1.00, 1.00, 1.00, 1.00]
+        fCosP:
+            min: [0.95, 0.95, 0.97, 0.97, 0.97, 0.97]
+            max: [1.00, 1.00, 1.00, 1.00, 1.00, 1.00]
+        fImpParProd:
+            min: [-1., -1., -1., -1., -1., -1.]
+            max: [0., 0., 0., 0., 0., 0.]
+        fNormDecayLengthXY:
+            min: [1., 1., 3., 3., 3., 3.]
+            max: [1000., 1000., 1000., 1000., 1000., 1000.]
+        fPtD0:
+            min: [4, 4, 4, 4, 4, 4]
+            max: [100, 100, 100, 100, 100, 100]
+        fNormDecayLengthXYD0:
+            min: [5., 5., 8., 8., 8., 8.]
+            max: [1000., 1000., 1000., 1000., 1000., 1000.]
+        fCosPD0:
+            min: [0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
+            max: [1., 1., 1., 1., 1., 1.]
+        fDecayLengthD0:
+            min: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+            max: [1000., 1000., 1000., 1000., 1000., 1000.]
+        fInvMassD0:
+            min: [1.82, 1.82, 1.82, 1.82, 1.82, 1.82]
+            max: [1.90, 1.90, 1.90, 1.90, 1.90, 1.90]
+
+model: models/FONLL-B-pp14TeV-y05-widebins.txt #pb
+BR: 0.000187109
+fragfrac: 0.41
+luminosity: 200 #pb-1
+sigmaMB: 57800000000 #pb
+fprompt: 1.

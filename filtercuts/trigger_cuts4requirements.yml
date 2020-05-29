@@ -1,0 +1,30 @@
+infile: 
+    path: data/2Prong_3Prong_FilteringSel_LHC18j4_improved.root
+    dir: PWGHF_D2H_CharmTrigger_GenPurpose
+outfile: filtercuts/TriggeredEvents_Cuts4Requirements_wPID.root
+
+nevents: 1000000
+
+ptthresholds: [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 12., 15.]
+
+applyPID: 1
+applycuts: 1
+
+cuts2Prong:
+    fPtLims: [0., 4., 10., 50.]
+    fCosP: [0.8, 0.85, 0.90]
+    fDecayLength: [0.05, 0.05, 0.08]
+    fPtMinDau: [0.5, 0.75, 1.]
+    fd0MinDau: [0.0025, 0.0025, 0.0025]
+    fNormDecayLengthXY: [0., 0., 0.]
+    fDeltaMass: [0.15, 0.15, 0.2] # GeV/c2 with respect to PDG, or among all mass hypotheses
+
+cuts3Prong:
+    fPtLims: [0., 4., 10., 50.]
+    fCosP: [0.8, 0.85, 0.90]
+    fDecayLength: [0.06, 0.08, 0.10]
+    fd0MinDau: [0.0025, 0.0025, 0.0025]
+    fPtMinDau: [0.5, 0.75, 1.]
+    fSigmaVtx: [0.02, 0.015, 0.015]
+    fNormDecayLengthXY: [0., 0., 0.]
+    fDeltaMass: [0.15, 0.15, 0.15] # GeV/c2 with respect to PDG, or among all mass hypotheses

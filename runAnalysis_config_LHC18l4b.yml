@@ -1,11 +1,11 @@
-runtype: grid #local, test, grid
-pathtolocalAOD: '.'
+runtype: local #local, test, grid
+pathtolocalAOD: 'AODfiles/LHC18l4b'
 system: pp
 datadir: /alice/sim/2018/LHC18l4b
 datapattern: AOD
 gridworkdir: CharmTriggerEfficiency
 splitmaxinputfilenum: 50
-AliPhysicVersion: vAN-20200108_ROOT6-1
+AliPhysicVersion: vAN-20200506_ROOT6-1
 runs: [286350]
 
 improverfiles:
@@ -17,14 +17,14 @@ cuts:
     cutfile: alien:///alice/cern.ch/user/f/fgrosa/CutObjects/pp13TevUpgr/D0DplusDsLcPreselectionCuts.root
 
 taskoptions:
-    writeonlysignal: 1
-    enableD0: 1
-    enableDplus: 1
-    enableDs: 1
-    enableLc: 1
+    writeonlysignal: 0
+    enableD0: 0
+    enableDplus: 0
+    enableDs: 0
+    enableLc: 0
     enableDstar: 0
     enableLc2V0: 0
-    enableBplus: 0
-    enableB0: 0
-    enableBs: 0
-    enableLb: 0
+    enableBplus: 1
+    enableB0: 1
+    enableBs: 1
+    enableLb: 1

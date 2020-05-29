@@ -20,7 +20,7 @@ def getGraphFromHistos(histoCent, histoMin, histoMax):
 
     return graph
 
-SetGlobalStyle(padbottommargin=0.14, padleftmargin=0.14, padtopmargin=0.08, opttitle=1)
+SetGlobalStyle(padbottommargin=0.14, padleftmargin=0.14, padtopmargin=0.035, opttitle=1)
 
 parser = argparse.ArgumentParser(description='Arguments')
 parser.add_argument('configfile', metavar='text', default='config.yml', help='input yaml file name')
@@ -32,6 +32,7 @@ with open(args.configfile, 'r') as ymlCfgFile:
 luminosity = cfg['luminosity']
 ptbinvsLint = cfg['ptbinvsLint']
 outputDir = cfg['outputdir']
+outputSuffix = cfg['outputsuffix']
 
 hSignificanceCent, hSignificanceMin, hSignificanceMax, gSignificance = ([] for iList in range(4))
 hSoverBCent, hSoverBMin, hSoverBMax, gSoverB = ([] for iList in range(4))
@@ -107,8 +108,8 @@ lineAtFive.SetLineWidth(2)
 gDummy = TGraphAsymmErrors(0)
 SetObjectStyle(gDummy, fillcolor=1, fillalpha=0.2, linecolor=0)
 
-legSignif = TLegend(0.4, 0.2, 0.8, 0.4)
-legSignif.SetTextSize(0.05)
+legSignif = TLegend(0.2, 0.2, 0.8, 0.4)
+legSignif.SetTextSize(0.045)
 legSignif.SetFillStyle(0)
 legSignifVsLumi = legSignif.Clone()
 for (hist, legname) in zip(hEffAccPrompt, cfg['legendnames']):
@@ -185,9 +186,9 @@ for iHist, (histP, histF) in enumerate(zip(hEffAccPrompt, hEffAccFD)):
     histF.DrawCopy('Esame')
     legEff.Draw()
 
-cSignificanceVsPt.SaveAs('{0}/Significance_vs_Pt.pdf'.format(outputDir))
-cSignificanceVsLumi.SaveAs('{0}/Significance_vs_Lumi.pdf'.format(outputDir))
-cSoverBVsPt.SaveAs('{0}/SoverB_vs_Pt.pdf'.format(outputDir))
-cEff.SaveAs('{0}/Efficiency_vs_Pt.pdf'.format(outputDir))
+cSignificanceVsPt.SaveAs('{0}/Significance_vs_Pt{1}.pdf'.format(outputDir, outputSuffix))
+cSignificanceVsLumi.SaveAs('{0}/Significance_vs_Lumi{1}.pdf'.format(outputDir, outputSuffix))
+cSoverBVsPt.SaveAs('{0}/SoverB_vs_Pt{1}.pdf'.format(outputDir, outputSuffix))
+cEff.SaveAs('{0}/Efficiency_vs_Pt{1}.pdf'.format(outputDir, outputSuffix))
 
 input('Press enter to exit')

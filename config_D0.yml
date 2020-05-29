@@ -13,7 +13,7 @@ ptmax: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24]
 
 varstodraw: [InvMass, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fImpParProd, fPtMinDau, fd0MinDau]
 varmins: [1.6, 0., 0.8, 0.8, 0., 0., -0.01, 0, 0.]
-varmaxs: [2.1, 24., 1., 1., 1., 40., 0.01, 2., 0.01]
+varmaxs: [2.1, 24., 1., 1., 0.25, 30., 0.01, 2., 0.005]
 
 genbranch: GenHadron
 seldecays: [2, 1] #D0 and D0bar
@@ -23,7 +23,7 @@ recoselbits: [0, 1]
 fidaccbit: 22
 
 applysel:
-    doapplysel: True
+    doapplysel: False
     selections:
         fPt:
             min: [0., 4., 10.]

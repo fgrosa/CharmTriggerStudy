@@ -46,7 +46,7 @@ ptlims = [ptmin for ptmin in ptmins]
 ptlims.append(ptmaxs[-1])
 if cfg['applysel']['doapplysel']:
     dicofcuts = cfg['applysel']['selections']
-nExpEv = cfg['sigmaMB'] * cfg['luminosity']
+nExpEv = cfg['sigmaMB'] * cfg['luminosity'] / 3
 
 treeRecoBkg = uproot.open(cfg['background']['inputfile'])['{0}/fRecoTree'.format(cfg['background']['inputdir'])]
 dfEv = treeRecoBkg.pandas.df(['zVtxReco'])

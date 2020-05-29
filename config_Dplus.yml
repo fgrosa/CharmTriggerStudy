@@ -13,7 +13,7 @@ output:
 
 varstodraw: [InvMass, fPt, fCosP, fCosPXY, fDecayLength, fNormDecayLengthXY, fSigmaVtx, fPtMinDau, fd0MinDau]
 varmins: [1.6, 0., 0.8, 0.8, 0., 0., 0., 0, 0.]
-varmaxs: [2.1, 24., 1., 1., 1., 40., 0.06, 2., 0.01]
+varmaxs: [2.1, 24., 1., 1., 0.025, 30., 0.03, 2., 0.01]
 
 genbranch: GenHadron
 seldecays: [3]
@@ -23,7 +23,7 @@ recoselbits: [2]
 fidaccbit: 23
 
 applysel:
-    doapplysel: True
+    doapplysel: False
     selections:
         fPt:
             min: [0., 4., 10.]
